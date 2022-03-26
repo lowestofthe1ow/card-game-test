@@ -75,6 +75,7 @@ window.onload = function() {
 
   $.get( "dict.txt", function( txt ) {
     wordlist = txt.split( "\r\n" );
+    console.log(wordlist);
 
     // Initialize
     log.innerHTML = "Loaded!<br />" +  log.innerHTML;
