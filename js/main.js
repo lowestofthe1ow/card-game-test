@@ -73,7 +73,7 @@ window.onload = function() {
     console.log(deck);
   }
 
-  $.get( "dict.txt", function( txt ) {
+  $.get( "https://lowestofthe1ow.github.io/card-game-test/dict.txt", function( txt ) {
     wordlist = txt.split( "\r\n" );
     console.log(wordlist);
 
