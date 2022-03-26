@@ -74,7 +74,7 @@ window.onload = function() {
   }
 
   $.get( "https://lowestofthe1ow.github.io/card-game-test/dict.txt", function( txt ) {
-    wordlist = txt.split( "\r\n" );
+    wordlist = txt.split( "\n" );
     console.log(wordlist);
 
     // Initialize
