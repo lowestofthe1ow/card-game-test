@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+     #textBox {
+       background-color: #0e0e0e;
+       border: none;
+       border-bottom: 3px solid #ffffff;
+       color: #ffffff;
+       font-size: 48px;
+       text-align: center;
+       font-family: "Roboto Mono";
+     }
+     #textBox:focus, input:focus{
+       outline: none;
+     }
+     #display {
+       font-family:'Roboto Mono';
+       font-size: 120px;
+       background-color: #141414;
+       margin-left: 10%;
+       margin-right: 10%;
+       border-radius: 20px;
+     }
+     #deckCount {
+       font-size: 24px;
+       font-weight: bold;
+     }
+     #log {
+       background-color: #141414;
+       height: 500px;
+       margin-left: 10%;
+       margin-right: 10%;
+       border-radius: 20px;
+       font-family: "Roboto Mono";
+       color: #999999;
+       font-size: 24px;
+       padding: 24px;
+       overflow: auto;
+     }
+     #shuffle, #submit {
+       background-color: #ff9966;
+       font-family: 'Roboto Mono';
+       color: #ffffff;
+       border: none;
+       border-radius: 10px;
+       font-size: 24px;
+       padding: 10px;
+     }
+     #submit {
+       background-color: #339966;
+     }
+     #shuffle:disabled, #submit:disabled {
+       background-color: #444444;
+     }
+    </style>
+  </head>
+  <body id="main" style="text-align: center; font-family: Roboto; background-color: #0e0e0e; color: #ffffff">
+    <br />
+    <p>Your cards:</p>
+    <h1 id="display">- - - - - - -</h1>
+    <p style="font-size: 24px;">You have <span id="deckCount">-</span> cards left in your deck.&nbsp;&nbsp;<button id="shuffle" disabled = true>Shuffle</button></p>
+    <br /><br />
+    <form onsubmit="return false">
+      <input type="text" id="textBox" onkeyup="this.value = this.value.toUpperCase();" ></input>
+      <input type="submit" id="submit" disabled = true/>
+    </form>
+    <br /><br />
+    <div id="log">
+      Loading the dictionary (Collins, 2019), please wait...
+    </div>
+    <br />
+    <p>Built by <span style="font-weight: bold">Lorenz Marqueses</span>, with love and the souls of the innocent. <a href="https://github.com/lowestofthe1ow/card-game-test" style="color: #FFFFFF;">Feedback.</a></p>
+    <br />
+  </body>
+  <script src="js/main.js"></script>
+  <script src="js/jquery-3.6.0.min.js"></script>
+</html>
