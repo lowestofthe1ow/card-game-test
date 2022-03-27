@@ -44,7 +44,7 @@ $(document).ready(function() {
     // Shuffle deck array
     deck = deck.sort(() => Math.random() - 0.5);
     // Log to game
-    $("#log").html("<span style='color: orange'>Shuffled deck.</span><br />" + $("#log").html());
+    $("#log").html("<span style='color: orange'>Shuffled deck.</span><br /><br />" + $("#log").html());
     // Draw 7 new cards and update deck and hand arrays
     $("#display").html(draw(7).join(" "));
     hand = $("#display").html().replace(/\s+/g, '').split("");
@@ -153,7 +153,7 @@ $(document).ready(function() {
 
   // Load dictionary from dict.txt
   $.get( "https://lowestofthe1ow.github.io/card-game-test/dict.txt", function( txt ) {
-    $("#log").html("Loaded!<br />" + $("#log").html());
+    $("#log").html("Loaded successfully!<br />" + $("#log").html());
 
     // Split dict.txt into an array
     wordlist = txt.split( "\n" );
@@ -243,7 +243,7 @@ $(document).ready(function() {
     $("#log").html(
       `<div style='text-align:center;'>
         The large letters shown on screen are the <span style='color: orange'>cards</span> in your <span style='color: orange'>hand</span>.<br />
-        Spell a word using them on the blank.<br/>
+        Type in a word that uses only these letters; you may not use a card more than once.<br/>
         Click <span style='color: green'>Submit</span> or press Enter to submit your input.<br/>
         Click <span style='color: orange'>Shuffle</span> to shuffle your cards.<br/>
         Click <span style='color: red'>Give up</span> to end the game.<br/>
