@@ -5,6 +5,8 @@ $(document).ready(function() {
   var wordlist = [];
   // Hand array
   var hand = [];
+  // Integer tracking number of words spelled
+  var wordsSpelled = 0;
 
   // Function for drawing cards
   function draw(number) {
@@ -44,6 +46,7 @@ $(document).ready(function() {
     // Draw 7 new cards and update deck and hand arrays
     $("#display").html(draw(7).join(" "));
     hand = $("#display").html().replace(/\s+/g, '').split("");
+    $("#shuffle").prop("disabled", true);
     console.log(deck);
   };
 
@@ -93,6 +96,10 @@ $(document).ready(function() {
       };
       // After confirming that the input is valid, update displays
       if (valid == true) {
+        // Add 1 to words spelled
+        wordsSpelled++;
+        // Re-enable shuffle button
+        $("#shuffle").prop("disabled", false);
         // Clear text box
         $("#textBox").val("");
         // Print to game log
@@ -114,11 +121,6 @@ $(document).ready(function() {
     // Split dict.txt into an array
     wordlist = txt.split( "\n" );
     console.log(wordlist);
-
-    // Initialize
-    $("#log").html("Loaded!<br />" + $("#log").html());
-    $("#shuffle").prop("disabled", false);
-    $("#submit").prop("disabled", false);
 
     // Set card distribution in deck
     const distribution = [
@@ -175,5 +177,24 @@ $(document).ready(function() {
         shuffle();
       }
     );
+    // Add event listener to end game when the "give up" button is clicked
+    $("#giveup").click(
+      function(){
+        $(".gameButton").prop("disabled", true);
+        $("#textBox").prop("disabled", true);
+        $("#log").html(
+          "------------------------------<br />" +
+          "<span style='color:red'>Game over!</span><br/>" +
+          "Cards left in deck: " + String(deck.length) + "<br />" +
+          "Words spelled: " + String(wordsSpelled) + "<br />" +
+          "Refresh the page to try again.<br />" +
+          "------------------------------<br />" + $("#log").html()
+        );
+      }
+    );
+
+    // Enable all buttons
+    $("#log").html("Loaded!<br />" + $("#log").html());
+    $(".gameButton").prop("disabled", false);
   });
 });
