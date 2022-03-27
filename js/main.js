@@ -72,7 +72,7 @@ $(document).ready(function() {
 
     // Invalidate input if it is longer than 7 characters
     if (arr.length > 7) {
-      $("#log").html("<span style='color: red'>Tried to submit " + text + ", but you used more than 7 characters.</span><br />" + $("#log").html());
+      $("#log").html("<span style='color: red'>Tried to submit " + text + ", but you used more than 7 characters.</span><br /><br />" + $("#log").html());
     }
     // Ignore input if it is empty
     else if (arr.length <= 0) {
@@ -80,7 +80,7 @@ $(document).ready(function() {
     }
     // Invalidate input if it is not a valid word in the loaded dictionary
     else if ($.inArray(text, wordlist) === -1) {
-      $("#log").html("<span style='color: red'>Tried to submit " + text + ", but it is not a valid word.</span><br />" + $("#log").html());
+      $("#log").html("<span style='color: red'>Tried to submit " + text + ", but it is not a valid word.</span><br /><br />" + $("#log").html());
       return 0;
     }
     // If input passes all the above tests, check if it is possible to create with the cards in hand
@@ -91,7 +91,7 @@ $(document).ready(function() {
         index = tempHand.findIndex(function(x) {return x == arr[i]});
         // Invalidate input if it does not exist
         if (index == -1) {
-          $("#log").html("<span style='color: red'>Tried to submit " + text + ", but there are not enough " + arr[i] + " cards in your hand.</span><br />" + $("#log").html());
+          $("#log").html("<span style='color: red'>Tried to submit " + text + ", but there are not enough " + arr[i] + " cards in your hand.</span><br /><br />" + $("#log").html());
           valid = false;
           break;
         }
@@ -114,7 +114,7 @@ $(document).ready(function() {
         // Clear text box
         $("#textBox").val("");
         // Print to game log
-        $("#log").html("<span style='color: green'>Submitted word " + text + ".</span><br />" + $("#log").html());
+        $("#log").html("<span style='color: green'>Submitted word " + text + ".</span><br /><br />" + $("#log").html());
         // Draw new cards to replace the ones used
         $("#display").html(tempHand.join(" ") + " " + draw(7 - tempHand.length).join(" "));
         // Update number of cards left in deck
@@ -122,10 +122,10 @@ $(document).ready(function() {
         // Explain mechanic
         if (letterReq == "") {
           $("#log").html(
-            "------------------------------------------<br />" +
-            "Now, use the last letter of your last word<br/>" +
-            "as the first letter in your next words.<br/>" +
-            "------------------------------------------<br />" + $("#log").html()
+            `<div style='text-align:center;'>
+              Now, use the <span style='color:orange'>last</span> letter of your last word as the <span style='color:orange'>first</span> letter in your next. You will not need to use another card.<br/>
+            <br /></div>`
+            + $("#log").html()
           );
         }
         // Disable text box if both deck and hand are empty
@@ -133,13 +133,18 @@ $(document).ready(function() {
           $(".gameButton").prop("disabled", true);
           $("#textBox").prop("disabled", true);
           $("#log").html(
-            "------------------------------------------<br />" +
-            "<span style='color:green'>Congratulations!</span><br/>" +
-            "You used up all the cards in your deck and hand.<br />" +
-            "Your full Scrib: " + scrib + "<br />" +
-            "Words spelled: " + String(wordsSpelled) + "<br />" +
-            "Refresh the page to try again.<br />" +
-            "------------------------------------------<br />" + $("#log").html()
+            `<div style='text-align:center;'>
+              <span style='color:red'>Congratulations!</span><br/>
+              You used up all the cards in your deck.<br />
+              Your full Scrib: `
+              + scrib +
+              `<br />
+              Words spelled: `
+              + String(wordsSpelled) +
+              `<br />
+              Refresh the page to try again.<br />
+            </div><br />`
+            + $("#log").html()
           );
         };
       };
@@ -215,13 +220,20 @@ $(document).ready(function() {
         $(".gameButton").prop("disabled", true);
         $("#textBox").prop("disabled", true);
         $("#log").html(
-          "------------------------------------------<br />" +
-          "<span style='color:red'>Game over!</span><br/>" +
-          "Cards left in deck: " + String(deck.length) + "<br />" +
-          "Your full Scrib: " + scrib + "<br />" +
-          "Words spelled: " + String(wordsSpelled) + "<br />" +
-          "Refresh the page to try again.<br />" +
-          "------------------------------------------<br />" + $("#log").html()
+          `<div style='text-align:center;'>
+            <span style='color:red'>Game over!</span><br/>
+            Cards left in deck: `
+            + String(deck.length) +
+            `<br />
+            Your full Scrib: `
+            + scrib +
+            `<br />
+            Words spelled: `
+            + String(wordsSpelled) +
+            `<br />
+            Refresh the page to try again.<br />
+          </div><br />`
+          + $("#log").html()
         );
       }
     );
@@ -229,12 +241,14 @@ $(document).ready(function() {
     // Enable all buttons
     $(".gameButton").prop("disabled", false);
     $("#log").html(
-      "------------------------------------------<br />" +
-      "Spell a word using the cards in your hand.<br/>" +
-      "Click <span style='color: green'>Submit</span> or press Enter to submit.<br/>" +
-      "Click <span style='color: orange'>Shuffle</span> to shuffle your cards.<br/>" +
-      "Click <span style='color: red'>Give up</span> to end the game.<br/>" +
-      "------------------------------------------<br />" + $("#log").html()
+      `<div style='text-align:center;'>
+        The large letters shown on screen are the <span style='color: orange'>cards</span> in your <span style='color: orange'>hand</span>.<br />
+        Spell a word using them on the blank.<br/>
+        Click <span style='color: green'>Submit</span> or press Enter to submit your input.<br/>
+        Click <span style='color: orange'>Shuffle</span> to shuffle your cards.<br/>
+        Click <span style='color: red'>Give up</span> to end the game.<br/>
+      </div><br />`
+      + $("#log").html()
     );
   });
 });

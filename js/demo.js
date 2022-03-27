@@ -7,6 +7,8 @@ $(document).ready(function() {
   var hand = [];
   // Integer tracking number of words spelled
   var wordsSpelled = 0;
+  // String of words
+  var scrib = "";
 
   // Function for drawing cards
   function draw(number) {
@@ -52,11 +54,11 @@ $(document).ready(function() {
 
   function submitWord() {
     // Update hand array
-    hand = $("#display").html().replace(/\s+/g, '').split("");
+    hand = $("#display").html().replace(/\s+/g, "").split("");
     // Save value of textbox content as a string
-    var text = $("#textBox").val().toUpperCase();
-    // Split string of textbox content into an array
-    var arr = text.replace(/\s+/g, '').split("");
+    var text = $("#textBox").val().replace(/\s+/g, '').toUpperCase();
+    // Split string "text" into an array
+    var arr = text.split("");
     // Clone the hand array temporarily
     var tempHand = hand;
     // Index of letter in word; -1 is default, meaning the word does not contain the letter
@@ -66,7 +68,7 @@ $(document).ready(function() {
 
     // Invalidate input if it is longer than 7 characters
     if (arr.length > 7) {
-      $("#log").html("<span style='color: red'>Tried to submit " + text + ", but it is longer than 7 characters.</span><br />" + $("#log").html());
+      $("#log").html("<span style='color: red'>Tried to submit " + text + ", but you used more than 7 characters.</span><br /><br />" + $("#log").html());
     }
     // Ignore input if it is empty
     else if (arr.length <= 0) {
@@ -74,7 +76,7 @@ $(document).ready(function() {
     }
     // Invalidate input if it is not a valid word in the loaded dictionary
     else if ($.inArray(text, wordlist) === -1) {
-      $("#log").html("<span style='color: red'>Tried to submit " + text + ", but it is not a valid word.</span><br />" + $("#log").html());
+      $("#log").html("<span style='color: red'>Tried to submit " + text + ", but it is not a valid word.</span><br /><br />" + $("#log").html());
       return 0;
     }
     // If input passes all the above tests, check if it is possible to create with the cards in hand
@@ -85,7 +87,7 @@ $(document).ready(function() {
         index = tempHand.findIndex(function(x) {return x == arr[i]});
         // Invalidate input if it does not exist
         if (index == -1) {
-          $("#log").html("<span style='color: red'>Tried to submit " + text + ", but there are not enough " + arr[i] + " cards in your hand.</span><br />" + $("#log").html());
+          $("#log").html("<span style='color: red'>Tried to submit " + text + ", but there are not enough " + arr[i] + " cards in your hand.</span><br /><br />" + $("#log").html());
           valid = false;
           break;
         }
@@ -96,14 +98,19 @@ $(document).ready(function() {
       };
       // After confirming that the input is valid, update displays
       if (valid == true) {
+        // Set the next letter requirement
+        $("#lastLetter").html(text.slice(-1));
+        $("#lastLetter").css("display", "flex");
         // Add 1 to words spelled
         wordsSpelled++;
+        // Add to string of all words spelled
+        scrib += text;
         // Re-enable shuffle button
         $("#shuffle").prop("disabled", false);
         // Clear text box
         $("#textBox").val("");
         // Print to game log
-        $("#log").html("<span style='color: green'>Submitted word " + text + ".</span><br />" + $("#log").html());
+        $("#log").html("<span style='color: green'>Submitted word " + text + ".</span><br /><br />" + $("#log").html());
         // Draw new cards to replace the ones used
         $("#display").html(tempHand.join(" ") + " " + draw(7 - tempHand.length).join(" "));
         // Update number of cards left in deck
@@ -113,12 +120,15 @@ $(document).ready(function() {
           $(".gameButton").prop("disabled", true);
           $("#textBox").prop("disabled", true);
           $("#log").html(
-            "------------------------------<br />" +
-            "<span style='color:green'>Congratulations!</span><br/>" +
-            "You used up all the cards in your deck and hand.<br />" +
-            "Words spelled: " + String(wordsSpelled) + "<br />" +
-            "Refresh the page to try again.<br />" +
-            "------------------------------<br />" + $("#log").html()
+            `<div style='text-align:center;'>
+              <span style='color:red'>Congratulations!</span><br/>
+              You used up all the cards in your deck.<br />
+              Words spelled: `
+              + String(wordsSpelled) +
+              `<br />
+              Refresh the page to try again.<br />
+            </div><br />`
+            + $("#log").html()
           );
         };
       };
@@ -127,6 +137,8 @@ $(document).ready(function() {
 
   // Load dictionary from dict.txt
   $.get( "https://lowestofthe1ow.github.io/card-game-test/dict.txt", function( txt ) {
+    $("#log").html("Loaded!<br />" + $("#log").html());
+
     // Split dict.txt into an array
     wordlist = txt.split( "\n" );
     console.log(wordlist);
@@ -192,18 +204,32 @@ $(document).ready(function() {
         $(".gameButton").prop("disabled", true);
         $("#textBox").prop("disabled", true);
         $("#log").html(
-          "------------------------------<br />" +
-          "<span style='color:red'>Game over!</span><br/>" +
-          "Cards left in deck: " + String(deck.length) + "<br />" +
-          "Words spelled: " + String(wordsSpelled) + "<br />" +
-          "Refresh the page to try again.<br />" +
-          "------------------------------<br />" + $("#log").html()
+          `<div style='text-align:center;'>
+            <span style='color:red'>Game over!</span><br/>
+            Cards left in deck: `
+            + String(deck.length) +
+            `<br />
+            Words spelled: `
+            + String(wordsSpelled) +
+            `<br />
+            Refresh the page to try again.<br />
+          </div><br />`
+          + $("#log").html()
         );
       }
     );
 
     // Enable all buttons
-    $("#log").html("Loaded!<br />" + $("#log").html());
     $(".gameButton").prop("disabled", false);
+    $("#log").html(
+      `<div style='text-align:center;'>
+        The large letters shown on screen are the <span style='color: orange'>cards</span> in your <span style='color: orange'>hand</span>.<br />
+        Spell a word using them on the blank.<br/>
+        Click <span style='color: green'>Submit</span> or press Enter to submit your input.<br/>
+        Click <span style='color: orange'>Shuffle</span> to shuffle your cards.<br/>
+        Click <span style='color: red'>Give up</span> to end the game.<br/>
+      </div><br />`
+      + $("#log").html()
+    );
   });
 });
