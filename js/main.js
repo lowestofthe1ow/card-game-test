@@ -72,7 +72,7 @@ $(document).ready(function() {
 
     // Invalidate input if it is longer than 7 characters
     if (arr.length > 7) {
-      $("#log").html("<span style='color: red'>Tried to submit " + text + ", but it is longer than 7 characters.</span><br />" + $("#log").html());
+      $("#log").html("<span style='color: red'>Tried to submit " + text + ", but you used more than 7 characters.</span><br />" + $("#log").html());
     }
     // Ignore input if it is empty
     else if (arr.length <= 0) {
