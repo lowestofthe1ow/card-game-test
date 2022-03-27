@@ -1,88 +1,123 @@
-window.onload = function() {
+$(document).ready(function() {
+  // Empty deck
   var deck = [];
+  // Dictionary array
   var wordlist = [];
-  const cardDisplay = document.getElementById("display");
-  const deckCount = document.getElementById("deckCount");
-  const textBox = document.getElementById("textBox");
-  const log = document.getElementById("log");
-  const submit = document.getElementById("submit");
-  const shuffleButton = document.getElementById("shuffle");
 
+  // Function for drawing cards
   function draw(number) {
+    // Declare empty array of cards drawn
     drawSet = [];
+    // Save length of deck array
     var deckLength = deck.length;
+
+    // Do not draw if there are no cards left in the deck array
     if (deckLength <= 0) {
-      log.innerHTML = "No cards left in deck. Cannot draw more.<br />" +  log.innerHTML;
-    } else if ((deckLength - number) >= 0) {
+      $("#log").html("No cards left in deck. Cannot draw more.<br />" +  $("#log").html());
+    }
+    // Draw all remaining cards if number of cards requested is more than the number of cards left in the deck array
+    else if ((deckLength - number) >= 0) {
       for(i = 0; i < number; i++) {
         drawSet[i] = deck.shift();
       };
-      log.innerHTML = "Drew " + String(drawSet.length) + " cards from your deck: " + drawSet.join(", ") + ".<br />" +  log.innerHTML;
-    } else {
-      console.log(deck.length);
+      $("#log").html("Drew " + String(drawSet.length) + " cards from your deck: " + drawSet.join(", ") + ".<br />" +  $("#log").html());
+    }
+    // Draw number of cards requested otherwise
+    else {
       for(i = 0; i < deckLength; i++) {
         drawSet[i] = deck.shift();
       };
-      console.log(drawSet);
-      log.innerHTML = "Drew " + String(drawSet.length) + " cards from your deck: " + drawSet.join(", ") + ".<br />" +  log.innerHTML;
+      $("#log").html("Drew " + String(drawSet.length) + " cards from your deck: " + drawSet.join(", ") + ".<br />" +  $("#log").html());
     };
+    // Return array of drawn cards
     return drawSet;
-  }
+  };
 
   function submitWord() {
-    var hand = cardDisplay.innerHTML.replace(/\s+/g, '').split("");
-    var arr = textBox.value.replace(/\s+/g, '').split("");
+    // Split string of cards in hand into an array
+    var hand = $("#display").html().replace(/\s+/g, '').split("");
+    // Save value of textbox content as a string
+    var text = $("#textBox").val().toUpperCase();
+    // Split string of textbox content into an array
+    var arr = text.replace(/\s+/g, '').split("");
+    // Clone the hand array temporarily
     var tempHand = hand;
+    // Index of letter in word; -1 is default, meaning the word does not contain the letter
     var index = -1;
+    // The input is considered valid by default
     var valid = true;
+
+    // Invalidate input if it is longer than 7 characters
     if (arr.length > 7) {
-      log.innerHTML = "<span style='color: red'>Tried to submit " + textBox.value + ", but it is longer than 7 characters.</span><br />" + log.innerHTML;
-    } else if (arr.length <= 0) {
+      $("#log").html("<span style='color: red'>Tried to submit " + text + ", but it is longer than 7 characters.</span><br />" + $("#log").html());
+    }
+    // Ignore input if it is empty
+    else if (arr.length <= 0) {
       return 0;
-    } else if ($.inArray(textBox.value, wordlist) === -1) {
-      log.innerHTML = "<span style='color: red'>Tried to submit " + textBox.value + ", but it is not a valid word.</span><br />" + log.innerHTML;
+    }
+    // Invalidate input if it is not a valid word in the loaded dictionary
+    else if ($.inArray(text, wordlist) === -1) {
+      $("#log").html("<span style='color: red'>Tried to submit " + text + ", but it is not a valid word.</span><br />" + $("#log").html());
       return 0;
-    } else {
+    }
+    // If input passes all the above tests, check if it is possible to create with the cards in hand
+    else {
+      // Loop through each character in the input
       for (i = 0; i < arr.length; i++) {
+        // Look for index of the input's ith character in the cloned array of cards in hand
         index = tempHand.findIndex(function(x) {return x == arr[i]});
+        // Invalidate input if it does not exist
         if (index == -1) {
-          log.innerHTML = "<span style='color: red'>Tried to submit " + textBox.value + ", but there are not enough " + arr[i] + " cards in your hand.</span><br />" + log.innerHTML;
+          $("#log").html("<span style='color: red'>Tried to submit " + text + ", but there are not enough " + arr[i] + " cards in your hand.</span><br />" + $("#log").html());
           valid = false;
           break;
-        } else {
+        }
+        // Remove element from cloned array as each card cannot be used more than once
+        else {
           tempHand.splice(index, 1);
-        }
-      }
+        };
+      };
+      // After confirming that the input is valid, update displays
       if (valid == true) {
-        log.innerHTML = "<span style='color: green'>Submitted word " + textBox.value + ".</span><br />" + log.innerHTML;
-        textBox.value = "";
-        cardDisplay.innerHTML = tempHand.join(" ");
-        cardDisplay.innerHTML += " " + draw(7 - tempHand.length).join(" ");
-        deckCount.innerHTML = String(deck.length);
-        if (cardDisplay.innerHTML.replace(/\s+/g, '').split("").length <= 0 && deck.length <= 0) {
-          textBox.disabled = true;
-        }
-      }
-    }
-  }
+        // Clear text box
+        $("#textBox").val("");
+        // Print to game log
+        $("#log").html("<span style='color: green'>Submitted word " + text + ".</span><br />" + $("#log").html());
+        // Draw new cards to replace the ones used
+        $("#display").html(tempHand.join(" ") + " " + draw(7 - tempHand.length).join(" "));
+        // Update number of cards left in deck
+        $("#deckCount").html(String(deck.length));
+        // Disable text box if both deck and hand are empty
+        if ($("#display").html().replace(/\s+/g, '').split("").length <= 0 && deck.length <= 0) {
+          $("#textBox").prop("disabled", true);
+        };
+      };
+    };
+  };
 
+  // Shuffle function
   function shuffle() {
+    // Shuffle deck array
     deck = deck.sort(() => Math.random() - 0.5);
-    log.innerHTML = "<span style='color: orange'>Shuffled deck.</span><br />" + log.innerHTML;
-    cardDisplay.innerHTML = draw(7).join(" ");
+    // Log to game
+    $("#log").html("<span style='color: orange'>Shuffled deck.</span><br />" + $("#log").html());
+    // Draw 7 new cards and update deck
+    $("#display").html(draw(7).join(" "));
     console.log(deck);
-  }
+  };
 
+  // Load dictionary from dict.txt
   $.get( "https://lowestofthe1ow.github.io/card-game-test/dict.txt", function( txt ) {
+    // Split dict.txt into an array
     wordlist = txt.split( "\n" );
     console.log(wordlist);
 
     // Initialize
-    log.innerHTML = "Loaded!<br />" +  log.innerHTML;
-    shuffleButton.disabled = false;
-    submit.disabled = false;
+    $("#log").html("Loaded!<br />" + $("#log").html());
+    $("#shuffle").prop("disabled", false);
+    $("#submit").prop("disabled", false);
 
-    // Generate deck
+    // Set card distribution in deck
     const distribution = [
       ["A", 9],
       ["B", 2],
@@ -110,20 +145,32 @@ window.onload = function() {
       ["X", 1],
       ["Y", 2],
       ["Z", 1]
-    ]
-    var deckPosition = 0
-    deck.length = 98;
+    ];
+    // Calculate total deck length
+    for (i = 0; i < distribution.length; i++) {
+      deck.length += distribution[i][1];
+    };
+    // Generate and shuffle deck
+    var deckPosition = 0;
     for (i = 0; i < distribution.length; i++) {
       deck = deck.fill(distribution[i][0], deckPosition, deckPosition + distribution[i][1]);
       deckPosition += distribution[i][1];
-    }
+    };
     shuffle();
-    deckCount.innerHTML = String(deck.length);
-
-    submit.addEventListener("click", function(){submitWord()});
-    shuffleButton.addEventListener("click", function(){
-      deck = deck.concat(cardDisplay.innerHTML.replace(/\s+/g, '').split(""));
-      shuffle()
-    });
+    // Update number of cards left in deck
+    $("#deckCount").html(String(deck.length));
+    // Add event listener to submit input when the "submit" button is clicked
+    $("#submit").click(
+      function(){
+        submitWord();
+      }
+    );
+    // Add event listener to return cards in hand to the deck and shuffle them when the "shuffle" button is clicked
+    $("#shuffle").click(
+      function(){
+        deck = deck.concat($("#display").html().replace(/\s+/g, '').split(""));
+        shuffle();
+      }
+    );
   });
-};
+});
