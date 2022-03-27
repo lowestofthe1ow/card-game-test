@@ -3,6 +3,8 @@ $(document).ready(function() {
   var deck = [];
   // Dictionary array
   var wordlist = [];
+  // Hand array
+  var hand = [];
 
   // Function for drawing cards
   function draw(number) {
@@ -33,9 +35,21 @@ $(document).ready(function() {
     return drawSet;
   };
 
+  // Shuffle function
+  function shuffle() {
+    // Shuffle deck array
+    deck = deck.sort(() => Math.random() - 0.5);
+    // Log to game
+    $("#log").html("<span style='color: orange'>Shuffled deck.</span><br />" + $("#log").html());
+    // Draw 7 new cards and update deck and hand arrays
+    $("#display").html(draw(7).join(" "));
+    hand = $("#display").html().replace(/\s+/g, '').split("");
+    console.log(deck);
+  };
+
   function submitWord() {
-    // Split string of cards in hand into an array
-    var hand = $("#display").html().replace(/\s+/g, '').split("");
+    // Update hand array
+    hand = $("#display").html().replace(/\s+/g, '').split("");
     // Save value of textbox content as a string
     var text = $("#textBox").val().toUpperCase();
     // Split string of textbox content into an array
@@ -63,7 +77,7 @@ $(document).ready(function() {
     // If input passes all the above tests, check if it is possible to create with the cards in hand
     else {
       // Loop through each character in the input
-      for (i = 0; i < arr.length; i++) {
+      for (let i = 0; i < arr.length; i++) {
         // Look for index of the input's ith character in the cloned array of cards in hand
         index = tempHand.findIndex(function(x) {return x == arr[i]});
         // Invalidate input if it does not exist
@@ -93,17 +107,6 @@ $(document).ready(function() {
         };
       };
     };
-  };
-
-  // Shuffle function
-  function shuffle() {
-    // Shuffle deck array
-    deck = deck.sort(() => Math.random() - 0.5);
-    // Log to game
-    $("#log").html("<span style='color: orange'>Shuffled deck.</span><br />" + $("#log").html());
-    // Draw 7 new cards and update deck
-    $("#display").html(draw(7).join(" "));
-    console.log(deck);
   };
 
   // Load dictionary from dict.txt
@@ -147,12 +150,12 @@ $(document).ready(function() {
       ["Z", 1]
     ];
     // Calculate total deck length
-    for (i = 0; i < distribution.length; i++) {
+    for (let i = 0; i < distribution.length; i++) {
       deck.length += distribution[i][1];
     };
     // Generate and shuffle deck
     var deckPosition = 0;
-    for (i = 0; i < distribution.length; i++) {
+    for (let i = 0; i < distribution.length; i++) {
       deck = deck.fill(distribution[i][0], deckPosition, deckPosition + distribution[i][1]);
       deckPosition += distribution[i][1];
     };
