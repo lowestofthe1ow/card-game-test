@@ -7,8 +7,6 @@ $(document).ready(function() {
   var hand = [];
   // Integer tracking number of words spelled
   var wordsSpelled = 0;
-  // String of words
-  var scrib = "";
 
   // Function for drawing cards
   function draw(number) {
@@ -54,15 +52,11 @@ $(document).ready(function() {
 
   function submitWord() {
     // Update hand array
-    hand = $("#display").html().replace(/\s+/g, "").split("");
-    // Set first letter requirement
-    var letterReq = $("#lastLetter").html();
+    hand = $("#display").html().replace(/\s+/g, '').split("");
     // Save value of textbox content as a string
-    var rawText = $("#textBox").val().replace(/\s+/g, '').toUpperCase();
-    // Add the first letter requirement to input string
-    var text = letterReq + rawText;
-    // Split string "text" into an array
-    var arr = rawText.split("");
+    var text = $("#textBox").val().toUpperCase();
+    // Split string of textbox content into an array
+    var arr = text.replace(/\s+/g, '').split("");
     // Clone the hand array temporarily
     var tempHand = hand;
     // Index of letter in word; -1 is default, meaning the word does not contain the letter
@@ -102,13 +96,8 @@ $(document).ready(function() {
       };
       // After confirming that the input is valid, update displays
       if (valid == true) {
-        // Set the next letter requirement
-        $("#lastLetter").html(text.slice(-1));
-        $("#lastLetter").css("display", "flex");
         // Add 1 to words spelled
         wordsSpelled++;
-        // Add to string of all words spelled
-        scrib += rawText;
         // Re-enable shuffle button
         $("#shuffle").prop("disabled", false);
         // Clear text box
@@ -119,27 +108,17 @@ $(document).ready(function() {
         $("#display").html(tempHand.join(" ") + " " + draw(7 - tempHand.length).join(" "));
         // Update number of cards left in deck
         $("#deckCount").html(String(deck.length));
-        // Explain mechanic
-        if (letterReq == "") {
-          $("#log").html(
-            "------------------------------------------<br />" +
-            "Now, use the last letter of your last word<br/>" +
-            "as the first letter in your next words.<br/>" +
-            "------------------------------------------<br />" + $("#log").html()
-          );
-        }
         // Disable text box if both deck and hand are empty
         if ($("#display").html().replace(/\s+/g, '').split("").length <= 0 && deck.length <= 0) {
           $(".gameButton").prop("disabled", true);
           $("#textBox").prop("disabled", true);
           $("#log").html(
-            "------------------------------------------<br />" +
+            "------------------------------<br />" +
             "<span style='color:green'>Congratulations!</span><br/>" +
             "You used up all the cards in your deck and hand.<br />" +
-            "Your full Scrib: " + scrib + "<br />" +
             "Words spelled: " + String(wordsSpelled) + "<br />" +
             "Refresh the page to try again.<br />" +
-            "------------------------------------------<br />" + $("#log").html()
+            "------------------------------<br />" + $("#log").html()
           );
         };
       };
@@ -148,8 +127,6 @@ $(document).ready(function() {
 
   // Load dictionary from dict.txt
   $.get( "https://lowestofthe1ow.github.io/card-game-test/dict.txt", function( txt ) {
-    $("#log").html("Loaded!<br />" + $("#log").html());
-
     // Split dict.txt into an array
     wordlist = txt.split( "\n" );
     console.log(wordlist);
@@ -215,26 +192,18 @@ $(document).ready(function() {
         $(".gameButton").prop("disabled", true);
         $("#textBox").prop("disabled", true);
         $("#log").html(
-          "------------------------------------------<br />" +
+          "------------------------------<br />" +
           "<span style='color:red'>Game over!</span><br/>" +
           "Cards left in deck: " + String(deck.length) + "<br />" +
-          "Your full Scrib: " + scrib + "<br />" +
           "Words spelled: " + String(wordsSpelled) + "<br />" +
           "Refresh the page to try again.<br />" +
-          "------------------------------------------<br />" + $("#log").html()
+          "------------------------------<br />" + $("#log").html()
         );
       }
     );
 
     // Enable all buttons
+    $("#log").html("Loaded!<br />" + $("#log").html());
     $(".gameButton").prop("disabled", false);
-    $("#log").html(
-      "------------------------------------------<br />" +
-      "Spell a word using the cards in your hand.<br/>" +
-      "Click <span style='color: green'>Submit</span> or press Enter to submit.<br/>" +
-      "Click <span style='color: orange'>Shuffle</span> to shuffle your cards.<br/>" +
-      "Click <span style='color: red'>Give up</span> to end the game.<br/>" +
-      "------------------------------------------<br />" + $("#log").html()
-    );
   });
 });

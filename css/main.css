@@ -1,0 +1,81 @@
+@font-face {
+  font-family: "Roboto";
+  font-weight: normal;
+  src: url(Roboto-Regular.ttf);
+}
+@font-face {
+  font-family: "Roboto";
+  font-weight: bold;
+  src: url(Roboto-Bold.ttf);
+}
+@font-face {
+  font-family: "Roboto Mono";
+  src: url(RobotoMono-Regular.ttf);
+}
+ #textBox {
+   background-color: #0e0e0e;
+   border: none;
+   border-bottom: 3px solid #ffffff;
+   color: #ffffff;
+   font-size: 36px;
+   text-align: left;
+   font-family: "Roboto Mono";
+   display: flex; justify-content: center;
+ }
+ #textBox:focus, input:focus{
+   outline: none;
+ }
+ h1 {
+   font-family:'Roboto Mono';
+   font-size: 120px;
+   background-color: #141414;
+   margin-left: 10%;
+   margin-right: 10%;
+   border-radius: 20px;
+ }
+ #deckCount {
+   font-size: 24px;
+   font-weight: bold;
+ }
+ #log {
+   background-color: #141414;
+   height: 500px;
+   margin-left: 10%;
+   margin-right: 10%;
+   border-radius: 20px;
+   font-family: "Roboto Mono";
+   color: #999999;
+   font-size: 24px;
+   padding: 24px;
+   overflow: auto;
+ }
+ .gameButton {
+   font-family: 'Roboto Mono';
+   color: #ffffff;
+   border: none;
+   border-radius: 10px;
+   font-size: 24px;
+   padding: 10px;
+   cursor: pointer;
+ }
+ #shuffle {
+   background-color: #ff9966;
+ }
+ #submit {
+   background-color: #339966;
+ }
+ #giveup {
+   background-color: #ff5050;
+ }
+ #shuffle:disabled, #submit:disabled, #giveup:disabled {
+   background-color: #444444;
+ }
+ #lastLetter {
+   font-size: 36px;
+   font-family: 'Roboto Mono';
+   background-color: #141414;
+   width: 75px;
+   border-radius: 20px;
+   display: none;
+   justify-content: center;
+ }
