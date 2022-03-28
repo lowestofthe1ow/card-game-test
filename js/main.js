@@ -152,7 +152,7 @@ $(document).ready(function() {
   };
 
   // Load dictionary from dict.txt
-  $.get( "https://lowestofthe1ow.github.io/card-game-test/dict.txt", function( txt ) {
+  $.get( "https://lowestofthe1ow.github.io/scrib/dict.txt", function( txt ) {
     $("#log").html("Loaded successfully!<br />" + $("#log").html());
 
     // Split dict.txt into an array
