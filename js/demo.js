@@ -30,8 +30,7 @@ $(document).ready(function() {
   var hand = [];
   // Integer tracking number of words spelled
   var wordsSpelled = 0;
-  // String of words
-  var scrib = "";
+
   var playerOrder = [];
 
   var inProgress = false;
@@ -139,8 +138,6 @@ $(document).ready(function() {
         shuffleReady = true;
         // Add 1 to words spelled
         wordsSpelled++;
-        // Add to string of all words spelled
-        scrib += rawText;
         // Clear text box
         $("#textBox").val("");
         // Print to game log
@@ -204,7 +201,9 @@ $(document).ready(function() {
   // Load dictionary from dict.txt
   async function initializeGame(type) {
     $(window).bind('beforeunload', function(){
-      return 'Are you sure you want to leave?';
+      if (playerOrder.length > 0) {
+        return 'Are you sure you want to leave?';
+      };
     });
     $.get( "https://lowestofthe1ow.github.io/scrib/dict.txt", async function( txt ) {
       $("#log").html("Loaded successfully!<br />" + $("#log").html());
@@ -471,6 +470,8 @@ $(document).ready(function() {
               }
               playerOrder.splice(turn, 1);
               if (playerOrder.length <= 0) {
+                let scrib = [doc.data().words[0]].concat(doc.data().words.slice(1).map(s => s.slice(1)));
+                console.log(scrib);
                 $("#log").html(
                   `<div style='text-align:center;'>
                     <span style='color:red'>Game over!</span><br/>
@@ -482,7 +483,9 @@ $(document).ready(function() {
                     Words spelled: `
                     + String(wordsSpelled) +
                     `<br />
-                    Refresh the page to try again.<br />
+                    Your full Scrib: `
+                    + scrib.join("") +
+                    `<br />Refresh the page to host or join a new room.<br />
                   </div><br />`
                   + $("#log").html()
                 );
