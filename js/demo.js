@@ -1,7 +1,6 @@
 // Import functions from Firebase SDKs
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-analytics.js";
-import { getFirestore, collection, setDoc, doc, updateDoc, arrayUnion, onSnapshot, getDoc, increment, arrayRemove } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+import { getFirestore, collection, setDoc, doc, updateDoc, arrayUnion, onSnapshot, getDoc, increment, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
 $(document).ready(function() {
   // Firebase configuration
@@ -17,7 +16,6 @@ $(document).ready(function() {
 
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
   const db = getFirestore(app);
 
   var generatedGameID;
@@ -44,6 +42,9 @@ $(document).ready(function() {
   var printedTurnOrder = false;
   var lastLetter = "";
   var timesShuffled = 0;
+  var timesPassed = 0;
+  var shuffleReady = true;
+  var passReady = true;
 
   // Function for drawing cards
   function draw(number) {
@@ -134,6 +135,8 @@ $(document).ready(function() {
       };
       // After confirming that the input is valid, update displays
       if (valid == true) {
+        passReady = true;
+        shuffleReady = true;
         // Add 1 to words spelled
         wordsSpelled++;
         // Add to string of all words spelled
@@ -163,15 +166,22 @@ $(document).ready(function() {
     });
   };
 
-  async function incrementTurn(number) {
+  async function incrementTurn(number, type) {
     await updateDoc(doc(db, "games", generatedGameID), {
       turn: number,
+      numberQuit: increment(type)
     });
   }
 
   async function broadcastShuffle() {
     await updateDoc(doc(db, "games", generatedGameID), {
       timesShuffled: increment(1)
+    });
+  }
+
+  async function broadcastPass() {
+    await updateDoc(doc(db, "games", generatedGameID), {
+      timesPassed: increment(1)
     });
   }
 
@@ -185,6 +195,10 @@ $(document).ready(function() {
     await setDoc(doc(db, "games", generatedGameID), {
       inputtedNames: arrayRemove(inputtedName)
     }, {merge: true});
+  }
+
+  async function deleteFirestore() {
+    await deleteDoc(doc(db, "games", generatedGameID));
   }
 
   // Load dictionary from dict.txt
@@ -249,6 +263,17 @@ $(document).ready(function() {
           shuffle();
           broadcastShuffle();
           $("#shuffle").prop("disabled", true);
+          shuffleReady = false;
+        }
+      );
+
+      // Add event listener to pass turn when the "pass" button is clicked
+      $("#pass").click(
+        function(){
+          $("#log").html("<span style='color:orange'>You passed your turn.</span>" + $("#log").html());
+          broadcastPass();
+          $("#pass").prop("disabled", "true");
+          passReady = false;
         }
       );
 
@@ -258,19 +283,15 @@ $(document).ready(function() {
           broadcastGiveUp();
           $(".gameButton").prop("disabled", true);
           $("#textBox").prop("disabled", true);
-          $("#log").html(
-            `<div style='text-align:center;'>
-              <span style='color:red'>You gave up!</span><br/>
-              Cards left in deck: `
-              + String(deck.length) +
-              `<br />
-              Words spelled: `
-              + String(wordsSpelled) +
-              `<br />
-              Refresh the page to try again.<br />
-            </div><br />`
-            + $("#log").html()
-          );
+          if (playerOrder.length !== 1) {
+            $("#log").html(
+              `<div style='text-align:center;'>
+                <span style='color:red'>You gave up!</span><br/>
+                Waiting for other players...
+              </div><br />`
+              + $("#log").html()
+            );
+          };
         }
       );
 
@@ -294,6 +315,8 @@ $(document).ready(function() {
           inProgress: false,
           turnOrder: [],
           timesShuffled: 0,
+          timesPassed: 0,
+          numberQuit: 0
         });
       }
       else if (type === "join") {
@@ -374,20 +397,47 @@ $(document).ready(function() {
                 printedTurnOrder = true;
               }
               else {
-                $("#log").html("<span style='color:green'>It is your turn.</span><br /><br />"+ $("#log").html());
-                $(".gameButton").prop("disabled", false);
+                if (playerOrder.length !== 1) {
+                  $("#log").html("<span style='color:green'>It is your turn.</span><br /><br />"+ $("#log").html());
+                };
+                $("#submit").prop("disabled", false);
+                $("#giveup").prop("disabled", false);
+                if (shuffleReady === true && playerOrder.length !== 1) {
+                  $("#shuffle").prop("disabled", false);
+                };
+                if (passReady === true && playerOrder.length !== 1) {
+                  $("#pass").prop("disabled", false);
+                };
                 printedTurnOrder = true;
               }
             }
 
             if (doc.data().timesShuffled !== timesShuffled) {
-              $("#log").html("<span style='color:yellow'>" + playerOrder[turn] + "</span> shuffled their cards.<br /><br />"+ $("#log").html());
+              if (playerOrder.indexOf(inputtedName) !== turn) {
+                $("#log").html("<span style='color:yellow'>" + playerOrder[turn] + "</span> shuffled their cards.<br /><br />"+ $("#log").html());
+              };
               timesShuffled = doc.data().timesShuffled;
+            }
+            else if (doc.data().timesPassed !== timesPassed) {
+              if (playerOrder.indexOf(inputtedName) !== turn) {
+                $("#log").html("<span style='color:yellow'>" + playerOrder[turn] + "</span> passed their turn.<br /><br />"+ $("#log").html());
+              };
+              timesPassed = doc.data().timesPassed;
+
+              if (turn === playerOrder.length - 1) {
+                turn = 0;
+              } else {
+                turn++;
+              };
+              incrementTurn(turn, 0);
+              printedTurnOrder = false;
             }
             else if (doc.data().words.length !== submittedWords.length) {
               submittedWords = doc.data().words;
 
-              $("#log").html("<span style='color:yellow'>" + playerOrder[turn] + "</span> <span style='color:green'>submitted word " + submittedWords[submittedWords.length - 1] + "</span><br /><br />"+ $("#log").html());
+              if (playerOrder.indexOf(inputtedName) !== turn) {
+                $("#log").html("<span style='color:yellow'>" + playerOrder[turn] + "</span> <span style='color:green'>submitted word " + submittedWords[submittedWords.length - 1] + "</span><br /><br />"+ $("#log").html());
+              };
 
               if (lastLetter === "") {
                 $("#log").html(
@@ -402,27 +452,25 @@ $(document).ready(function() {
               $("#lastLetter").html(lastLetter);
               $("#lastLetter").css("display", "flex");
 
-              if (turn === playerOrder.length - 1) {
+              if (turn >= playerOrder.length - 1) {
                 turn = 0;
               } else {
                 turn++;
               };
-              incrementTurn(turn);
+              incrementTurn(turn, 0);
               printedTurnOrder = false;
             }
             else if (doc.data().inputtedNames.length !== playerOrder.length) {
               if (playerOrder[turn] !== inputtedName) {
                 $("#log").html("<span style='color:red'>" + playerOrder[turn] + " gave up.</span><br /><br />"+ $("#log").html());
               }
-              console.log(playerOrder);
-              console.log(turn);
               playerOrder.splice(turn, 1);
-              console.log(playerOrder);
-              if (playerOrder.length === 1) {
+              if (playerOrder.length <= 0) {
                 $("#log").html(
                   `<div style='text-align:center;'>
                     <span style='color:red'>Game over!</span><br/>
-                    All players except <span style='color:yellow'>` + playerOrder[0]  + `</span> have given up.<br />
+                    All players have given up.<br />
+                    <span style='color:yellow'>Your stats:</span><br />
                     Cards left in deck: `
                     + String(deck.length) +
                     `<br />
@@ -433,6 +481,32 @@ $(document).ready(function() {
                   </div><br />`
                   + $("#log").html()
                 );
+                deleteFirestore();
+                $(".gameButton").prop("disabled", true);
+              }
+              else {
+                if (playerOrder.length === 1) {
+                  turn = 0;
+                  if (playerOrder[0] === inputtedName) {
+                    $("#log").html("<span style='color:green'>You are now the only player left. Play until the end; you are no longer allowed to shuffle or pass.</span><br /><br />"+ $("#log").html());
+                    $("#submit").prop("disabled", false)
+                    $("#giveup").prop("disabled", false)
+                    $("#shuffle").prop("disabled", true)
+                    $("#pass").prop("disabled", true)
+                  }
+                  else {
+                    $("#log").html("<span style='color:yellow'>" + playerOrder[0] + "</span> is now the only player left.<br /><br />"+ $("#log").html());
+                    $(".gameButton").prop("disabled", true);
+                  };
+                  printedTurnOrder = true;
+                }
+                else {
+                  if (turn >= playerOrder.length) {
+                    turn = 0;
+                  };
+                  incrementTurn(turn, 1);
+                  printedTurnOrder = false;
+                };
               }
             };
           };

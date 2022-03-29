@@ -70,7 +70,7 @@
    padding: 10px;
    cursor: pointer;
  }
- #shuffle {
+ #shuffle, #pass {
    background-color: #ff9966;
  }
  #submit {
@@ -82,7 +82,7 @@
  #readyButton {
    background-color: #339966;
  }
- #shuffle:disabled, #submit:disabled, #giveup:disabled, #readyButton:disabled {
+ #shuffle:disabled, #submit:disabled, #giveup:disabled, #readyButton:disabled, #pass:disabled {
    background-color: #444444;
  }
  #lastLetter {
