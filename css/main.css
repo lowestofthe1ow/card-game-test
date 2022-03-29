@@ -25,6 +25,16 @@
  #textBox:focus, input:focus{
    outline: none;
  }
+ .roomDetails {
+   background-color: #0e0e0e;
+   border: none;
+   width: 500px;
+   border-bottom: 3px solid #ffffff;
+   color: #ffffff;
+   font-size: 30px;
+   text-align: left;
+   font-family: "Roboto Mono";
+ }
  h1 {
    font-family:'Roboto Mono';
    font-size: 120px;
@@ -69,7 +79,10 @@
  #giveup {
    background-color: #ff5050;
  }
- #shuffle:disabled, #submit:disabled, #giveup:disabled {
+ #readyButton {
+   background-color: #339966;
+ }
+ #shuffle:disabled, #submit:disabled, #giveup:disabled, #readyButton:disabled {
    background-color: #444444;
  }
  #lastLetter {

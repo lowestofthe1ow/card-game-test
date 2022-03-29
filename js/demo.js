@@ -20,7 +20,6 @@ $(document).ready(function() {
   const analytics = getAnalytics(app);
   const db = getFirestore(app);
 
-  const playerID = "id" + Math.random().toString(16).slice(2);
   var generatedGameID;
   var inputtedName;
 
@@ -43,7 +42,6 @@ $(document).ready(function() {
   var decidedTurnOrder = false;
   var turn = 0;
   var printedTurnOrder = false;
-  var mechanicShown = false;
   var lastLetter = "";
   var timesShuffled = 0;
 
@@ -179,9 +177,14 @@ $(document).ready(function() {
 
   async function broadcastGiveUp() {
     await updateDoc(doc(db, "games", generatedGameID), {
-      players: arrayRemove(playerID),
       inputtedNames: arrayRemove(inputtedName)
     });
+  }
+
+  async function sendScoreToFirestore() {
+    await setDoc(doc(db, "games", generatedGameID), {
+      inputtedNames: arrayRemove(inputtedName)
+    }, {merge: true});
   }
 
   // Load dictionary from dict.txt
@@ -257,7 +260,7 @@ $(document).ready(function() {
           $("#textBox").prop("disabled", true);
           $("#log").html(
             `<div style='text-align:center;'>
-              <span style='color:red'>Game over!</span><br/>
+              <span style='color:red'>You gave up!</span><br/>
               Cards left in deck: `
               + String(deck.length) +
               `<br />
@@ -273,6 +276,7 @@ $(document).ready(function() {
 
       $("#readyButton").click(
         async function() {
+          $("#readyButton").css("display", "none");
           inProgress = true;
 
           await updateDoc(doc(db, "games", generatedGameID), {
@@ -285,18 +289,16 @@ $(document).ready(function() {
       if (type === "host") {
         await setDoc(doc(db, "games", generatedGameID), {
           inputtedNames: [inputtedName],
-          players: [playerID],
           words: [],
           turn: 0,
           inProgress: false,
           turnOrder: [],
-          timesShuffled: 0
+          timesShuffled: 0,
         });
       }
       else if (type === "join") {
         await updateDoc(doc(db, "games", generatedGameID), {
           inputtedNames: arrayUnion(inputtedName),
-          players: arrayUnion(playerID),
         });
       };
 
@@ -304,12 +306,10 @@ $(document).ready(function() {
         if (doc.data().inProgress === false) {
           let inputtedNamesArray = doc.data().inputtedNames;
           let newinputtedName = inputtedNamesArray[inputtedNamesArray.length - 1];
-          let newPlayerID = doc.data().players[doc.data().players.length - 1];
           $("#log").html(
             `<div style='text-align:center;'>
               A player has joined. [` + doc.data().inputtedNames.length + `]<br />
               Name: <span style="color:yellow">` + newinputtedName + `</span><br />
-              ID: <span style="color:orange">` + newPlayerID + `</span><br />
             </div><br />` +
             $("#log").html()
           );
@@ -337,7 +337,7 @@ $(document).ready(function() {
               drawnStartingHand = true;
             };
 
-            if(doc.data().turnOrder.length === doc.data().players.length && decidedTurnOrder === false) {
+            if(doc.data().turnOrder.length === doc.data().inputtedNames.length && decidedTurnOrder === false) {
               playerOrder = doc.data().turnOrder.sort().map(s => s.slice(1))
               let drawnLetters = doc.data().turnOrder.sort().map(s => s.charAt(0))
 
@@ -409,14 +409,19 @@ $(document).ready(function() {
               incrementTurn(turn);
               printedTurnOrder = false;
             }
-            else if (doc.data().players.length !== playerOrder.length) {
-              $("#log").html("<span style='color:red'>" + playerOrder[turn] + " gave up.</span><br /><br />"+ $("#log").html());
-              playerOrder = playerOrder.splice(turn, 1);
+            else if (doc.data().inputtedNames.length !== playerOrder.length) {
+              if (playerOrder[turn] !== inputtedName) {
+                $("#log").html("<span style='color:red'>" + playerOrder[turn] + " gave up.</span><br /><br />"+ $("#log").html());
+              }
+              console.log(playerOrder);
+              console.log(turn);
+              playerOrder.splice(turn, 1);
+              console.log(playerOrder);
               if (playerOrder.length === 1) {
                 $("#log").html(
                   `<div style='text-align:center;'>
                     <span style='color:red'>Game over!</span><br/>
-                    All other players have given up.
+                    All players except <span style='color:yellow'>` + playerOrder[0]  + `</span> have given up.<br />
                     Cards left in deck: `
                     + String(deck.length) +
                     `<br />
@@ -434,10 +439,8 @@ $(document).ready(function() {
       });
 
       $("#log").html(
-        `<div style='text-align:center;'>` +
-          "Game ID: <span style='color:orange'>" + generatedGameID + "</span><br />" +
-          `Click [Ready] to start the game.
-        </div><br />` +
+        "<div style='text-align:center;'>" +
+          "Game ID: <span style='color:orange'>" + generatedGameID + "</span></div><br />" +
         $("#log").html()
       );
     });
@@ -450,7 +453,7 @@ $(document).ready(function() {
   };
 
   $("#host").click(
-    function() {
+    async function() {
       inputtedName = $("#name").val().replace(/\s+/g, "");
       generatedGameID = "id" + Math.random().toString(16).slice(2);
       if (inputtedName === "") {
@@ -466,7 +469,7 @@ $(document).ready(function() {
   );
 
   $("#join").click(
-    function() {
+    async function() {
       inputtedName = $("#name").val().replace(/\s+/g, "");
       generatedGameID = $("#formGameID").val().replace(/\s+/g, "");
       if (inputtedName === "") {
@@ -476,10 +479,24 @@ $(document).ready(function() {
         alert("Please input a game ID.")
       }
       else {
-        $("#startOptions").css("display", "none");
-        $("#game").css("display", "block");
-        initializeGame("join", generatedGameID);
-      }
+        let firestoreData = await getDoc(doc(db, "games", generatedGameID));
+        if (firestoreData.exists()) {
+          if (firestoreData.data().inProgress === true) {
+            alert("This game is in progress.")
+          }
+          else if (firestoreData.data().inputtedNames.indexOf(inputtedName) !== -1) {
+            alert("This name is taken in that room.")
+          }
+          else {
+            $("#startOptions").css("display", "none");
+            $("#game").css("display", "block");
+            initializeGame("join", generatedGameID);
+          }
+        }
+        else {
+          alert("No game with the given ID exists.")
+        }
+      };
     }
   );
 });

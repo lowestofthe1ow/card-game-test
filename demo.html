@@ -10,12 +10,14 @@
   </head>
   <body id="main" style="text-align: center; font-family: Roboto; background-color: #0e0e0e; color: #ffffff">
     <div id="startOptions">
-      <form onsubmit="return false" style="display: flex; justify-content: center;">
-        <input type="text" id="name" placeholder="Enter name"></input>
-        <input type="text" id="formGameID" placeholder="Enter Game ID to join"></input>
+      <br /><br /><br /><br />
+      <form onsubmit="return false" style="display: block; text-align: center;">
+        <input type="text" id="name" placeholder="Enter name" class="roomDetails"></input><br /><br />
+        <input type="text" id="formGameID" placeholder="Enter Game ID if joining" class="roomDetails"></input>
       </form>
-      <button id="host" class="gameButton" style="color: #ffffff; background-color: #121212;">Host</button>
-      <button id="join" class="gameButton" style="color: #ffffff; background-color: #121212;">Join</button>
+      <br />
+      <button id="host" class="gameButton" style="color: #ffffff; background-color: #339966;">Host</button>
+      <button id="join" class="gameButton" style="color: #ffffff; background-color: #2cbaba;">Join</button>
     </div>
     <div id="game" style="display: none; text-align: center;">
       <h1 id="display">- - - - - - -</h1>
