@@ -203,6 +203,9 @@ $(document).ready(function() {
 
   // Load dictionary from dict.txt
   async function initializeGame(type) {
+    $(window).bind('beforeunload', function(){
+      return 'Are you sure you want to leave?';
+    });
     $.get( "https://lowestofthe1ow.github.io/scrib/dict.txt", async function( txt ) {
       $("#log").html("Loaded successfully!<br />" + $("#log").html());
 
@@ -392,7 +395,9 @@ $(document).ready(function() {
           } else if (decidedTurnOrder = true) {
             if (printedTurnOrder === false) {
               if (playerOrder.indexOf(inputtedName) !== turn) {
-                $("#log").html("It is <span style='color:yellow'>" + playerOrder[turn] + "</span>'s turn.<br /><br />"+ $("#log").html());
+                if (playerOrder.length !== 1) {
+                  $("#log").html("It is <span style='color:yellow'>" + playerOrder[turn] + "</span>'s turn.<br /><br />"+ $("#log").html());
+                };
                 $(".gameButton").prop("disabled", true);
                 printedTurnOrder = true;
               }
