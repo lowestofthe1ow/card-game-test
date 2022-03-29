@@ -1,19 +1,56 @@
+// Import functions from Firebase SDKs
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-analytics.js";
+import { getFirestore, collection, setDoc, doc, updateDoc, arrayUnion, onSnapshot, getDoc, increment, arrayRemove } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+
 $(document).ready(function() {
+  // Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyBMHk8PXLlcJ89jeLh0lLaou4JZ2kbNkys",
+    authDomain: "scrib-f27a9.firebaseapp.com",
+    projectId: "scrib-f27a9",
+    storageBucket: "scrib-f27a9.appspot.com",
+    messagingSenderId: "560951682267",
+    appId: "1:560951682267:web:a1ddf3633a1f31b5edd8fe",
+    measurementId: "G-3WPBN5QT4G"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const db = getFirestore(app);
+
+  const playerID = "id" + Math.random().toString(16).slice(2);
+  var generatedGameID;
+  var inputtedName;
+
   // Empty deck
   var deck = [];
   // Dictionary array
   var wordlist = [];
+  var submittedWords = [];
   // Hand array
   var hand = [];
   // Integer tracking number of words spelled
   var wordsSpelled = 0;
   // String of words
   var scrib = "";
+  var playerOrder = [];
+
+  var inProgress = false;
+  var startedGame = false;
+  var drawnStartingHand = false;
+  var decidedTurnOrder = false;
+  var turn = 0;
+  var printedTurnOrder = false;
+  var mechanicShown = false;
+  var lastLetter = "";
+  var timesShuffled = 0;
 
   // Function for drawing cards
   function draw(number) {
     // Declare empty array of cards drawn
-    drawSet = [];
+    var drawSet = [];
     // Save length of deck array
     var deckLength = deck.length;
 
@@ -23,18 +60,19 @@ $(document).ready(function() {
     }
     // Draw all remaining cards if number of cards requested is more than the number of cards left in the deck array
     else if ((deckLength - number) >= 0) {
-      for(i = 0; i < number; i++) {
+      for(let i = 0; i < number; i++) {
         drawSet[i] = deck.shift();
       };
       $("#log").html("Drew " + String(drawSet.length) + " cards from your deck: " + drawSet.join(", ") + ".<br />" +  $("#log").html());
     }
     // Draw number of cards requested otherwise
     else {
-      for(i = 0; i < deckLength; i++) {
+      for(let i = 0; i < deckLength; i++) {
         drawSet[i] = deck.shift();
       };
       $("#log").html("Drew " + String(drawSet.length) + " cards from your deck: " + drawSet.join(", ") + ".<br />" +  $("#log").html());
     };
+
     // Return array of drawn cards
     return drawSet;
   };
@@ -48,17 +86,17 @@ $(document).ready(function() {
     // Draw 7 new cards and update deck and hand arrays
     $("#display").html(draw(7).join(" "));
     hand = $("#display").html().replace(/\s+/g, '').split("");
-    $("#shuffle").prop("disabled", true);
-    console.log(deck);
   };
 
   function submitWord() {
     // Update hand array
     hand = $("#display").html().replace(/\s+/g, "").split("");
     // Save value of textbox content as a string
-    var text = $("#textBox").val().replace(/\s+/g, '').toUpperCase();
-    // Split string "text" into an array
-    var arr = text.split("");
+    var rawText = $("#textBox").val().replace(/\s+/g, '').toUpperCase();
+    // Add the first letter requirement to input string
+    var text = lastLetter + rawText;
+    // Split string "rawText" into an array
+    var arr = rawText.split("");
     // Clone the hand array temporarily
     var tempHand = hand;
     // Index of letter in word; -1 is default, meaning the word does not contain the letter
@@ -98,15 +136,10 @@ $(document).ready(function() {
       };
       // After confirming that the input is valid, update displays
       if (valid == true) {
-        // Set the next letter requirement
-        $("#lastLetter").html(text.slice(-1));
-        $("#lastLetter").css("display", "flex");
         // Add 1 to words spelled
         wordsSpelled++;
         // Add to string of all words spelled
-        scrib += text;
-        // Re-enable shuffle button
-        $("#shuffle").prop("disabled", false);
+        scrib += rawText;
         // Clear text box
         $("#textBox").val("");
         // Print to game log
@@ -115,14 +148,119 @@ $(document).ready(function() {
         $("#display").html(tempHand.join(" ") + " " + draw(7 - tempHand.length).join(" "));
         // Update number of cards left in deck
         $("#deckCount").html(String(deck.length));
-        // Disable text box if both deck and hand are empty
-        if ($("#display").html().replace(/\s+/g, '').split("").length <= 0 && deck.length <= 0) {
+        sendWordToFirestore(text);
+      };
+    };
+  };
+
+  async function setTurnOrder() {
+    await updateDoc(doc(db, "games", generatedGameID), {
+      turnOrder: arrayUnion(hand[0] + inputtedName),
+    });
+  };
+
+  async function shuffleTurnOrder(array) {
+    await updateDoc(doc(db, "games", generatedGameID), {
+      turnOrder: array.sort().map(s => s.slice(1)),
+    });
+  };
+
+  async function incrementTurn(number) {
+    await updateDoc(doc(db, "games", generatedGameID), {
+      turn: number,
+    });
+  }
+
+  async function broadcastShuffle() {
+    await updateDoc(doc(db, "games", generatedGameID), {
+      timesShuffled: increment(1)
+    });
+  }
+
+  async function broadcastGiveUp() {
+    await updateDoc(doc(db, "games", generatedGameID), {
+      players: arrayRemove(playerID),
+      inputtedNames: arrayRemove(inputtedName)
+    });
+  }
+
+  // Load dictionary from dict.txt
+  async function initializeGame(type) {
+    $.get( "https://lowestofthe1ow.github.io/scrib/dict.txt", async function( txt ) {
+      $("#log").html("Loaded successfully!<br />" + $("#log").html());
+
+      // Split dict.txt into an array
+      wordlist = txt.split( "\n" );
+
+      // Set card distribution in deck
+      const distribution = [
+        ["A", 9],
+        ["B", 2],
+        ["C", 2],
+        ["D", 4],
+        ["E", 12],
+        ["F", 2],
+        ["G", 3],
+        ["H", 2],
+        ["I", 9],
+        ["J", 1],
+        ["K", 1],
+        ["L", 4],
+        ["M", 2],
+        ["N", 6],
+        ["O", 8],
+        ["P", 2],
+        ["Q", 1],
+        ["R", 6],
+        ["S", 4],
+        ["T", 6],
+        ["U", 4],
+        ["V", 2],
+        ["W", 2],
+        ["X", 1],
+        ["Y", 2],
+        ["Z", 1]
+      ];
+      // Calculate total deck length
+      for (let i = 0; i < distribution.length; i++) {
+        deck.length += distribution[i][1];
+      };
+      // Generate and shuffle deck
+      var deckPosition = 0;
+      for (let i = 0; i < distribution.length; i++) {
+        deck = deck.fill(distribution[i][0], deckPosition, deckPosition + distribution[i][1]);
+        deckPosition += distribution[i][1];
+      };
+
+      // Add event listener to submit input when the "submit" button is clicked
+      $("#submit").click(
+        function(){
+          submitWord();
+        }
+      );
+
+      // Add event listener to return cards in hand to the deck and shuffle them when the "shuffle" button is clicked
+      $("#shuffle").click(
+        function(){
+          deck = deck.concat($("#display").html().replace(/\s+/g, '').split(""));
+          shuffle();
+          broadcastShuffle();
+          $("#shuffle").prop("disabled", true);
+        }
+      );
+
+      // Add event listener to end game when the "give up" button is clicked
+      $("#giveup").click(
+        function(){
+          broadcastGiveUp();
           $(".gameButton").prop("disabled", true);
           $("#textBox").prop("disabled", true);
           $("#log").html(
             `<div style='text-align:center;'>
-              <span style='color:red'>Congratulations!</span><br/>
-              You used up all the cards in your deck.<br />
+              <span style='color:red'>Game over!</span><br/>
+              Cards left in deck: `
+              + String(deck.length) +
+              `<br />
               Words spelled: `
               + String(wordsSpelled) +
               `<br />
@@ -130,106 +268,218 @@ $(document).ready(function() {
             </div><br />`
             + $("#log").html()
           );
-        };
+        }
+      );
+
+      $("#readyButton").click(
+        async function() {
+          inProgress = true;
+
+          await updateDoc(doc(db, "games", generatedGameID), {
+            inProgress: true,
+            turn: turn
+          });
+        }
+      );
+
+      if (type === "host") {
+        await setDoc(doc(db, "games", generatedGameID), {
+          inputtedNames: [inputtedName],
+          players: [playerID],
+          words: [],
+          turn: 0,
+          inProgress: false,
+          turnOrder: [],
+          timesShuffled: 0
+        });
+      }
+      else if (type === "join") {
+        await updateDoc(doc(db, "games", generatedGameID), {
+          inputtedNames: arrayUnion(inputtedName),
+          players: arrayUnion(playerID),
+        });
       };
-    };
+
+      const change = onSnapshot(doc(db, "games", generatedGameID), (doc) => {
+        if (doc.data().inProgress === false) {
+          let inputtedNamesArray = doc.data().inputtedNames;
+          let newinputtedName = inputtedNamesArray[inputtedNamesArray.length - 1];
+          let newPlayerID = doc.data().players[doc.data().players.length - 1];
+          $("#log").html(
+            `<div style='text-align:center;'>
+              A player has joined. [` + doc.data().inputtedNames.length + `]<br />
+              Name: <span style="color:yellow">` + newinputtedName + `</span><br />
+              ID: <span style="color:orange">` + newPlayerID + `</span><br />
+            </div><br />` +
+            $("#log").html()
+          );
+          if (doc.data().inputtedNames.length === 2 && type === "host") {
+            $("#readyButton").prop("disabled", false);
+            $("#log").html(
+              `<div style='text-align:center;'>
+              Click <span style="color:Green">Ready</span> to begin the game!
+              </div><br />` +
+              $("#log").html()
+            );
+          }
+        }
+        else {
+          if (startedGame === false) {
+            if (drawnStartingHand === false) {
+              $("#log").html(
+                `<div style='text-align:center;'>
+                The game has started!
+                </div><br />` +
+                $("#log").html()
+              );
+              shuffle();
+              setTurnOrder();
+              drawnStartingHand = true;
+            };
+
+            if(doc.data().turnOrder.length === doc.data().players.length && decidedTurnOrder === false) {
+              playerOrder = doc.data().turnOrder.sort().map(s => s.slice(1))
+              let drawnLetters = doc.data().turnOrder.sort().map(s => s.charAt(0))
+
+              $("#log").html("<br />" + $("#log").html());
+              for (let i = 0; i < playerOrder.length; i++) {
+                $("#log").html("<span style='color: yellow'>" + playerOrder[i] + "</span> drew " + drawnLetters[i] + " first.<br />" + $("#log").html());
+              }
+
+              $("#log").html("Thus, the turn order will be the following:<br /><span style='color:yellow'>" + playerOrder.join("</span>, <span style='color:yellow'>") + "</span><br /><br />" + $("#log").html());
+              // Update number of cards left in deck
+              $("#deckCount").html(String(deck.length));
+
+              $("#log").html(
+                `<div style='text-align:center;'>
+                  The large letters shown on screen are the <span style='color: orange'>cards</span> in your <span style='color: orange'>hand</span>.<br />
+                  Type in a word that uses only these letters; you may not use a card more than once.<br/>
+                  Click <span style='color: green'>Submit</span> or press Enter to submit your input.<br/>
+                  Click <span style='color: orange'>Shuffle</span> to shuffle your cards.<br/>
+                  Click <span style='color: red'>Give up</span> to end the game.<br/>
+                </div><br />`
+                + $("#log").html()
+              );
+
+              shuffleTurnOrder(doc.data().turnOrder);
+              startedGame = true;
+              decidedTurnOrder = true;
+            };
+          } else if (decidedTurnOrder = true) {
+            if (printedTurnOrder === false) {
+              if (playerOrder.indexOf(inputtedName) !== turn) {
+                $("#log").html("It is <span style='color:yellow'>" + playerOrder[turn] + "</span>'s turn.<br /><br />"+ $("#log").html());
+                $(".gameButton").prop("disabled", true);
+                printedTurnOrder = true;
+              }
+              else {
+                $("#log").html("<span style='color:green'>It is your turn.</span><br /><br />"+ $("#log").html());
+                $(".gameButton").prop("disabled", false);
+                printedTurnOrder = true;
+              }
+            }
+
+            if (doc.data().timesShuffled !== timesShuffled) {
+              $("#log").html("<span style='color:yellow'>" + playerOrder[turn] + "</span> shuffled their cards.<br /><br />"+ $("#log").html());
+              timesShuffled = doc.data().timesShuffled;
+            }
+            else if (doc.data().words.length !== submittedWords.length) {
+              submittedWords = doc.data().words;
+
+              $("#log").html("<span style='color:yellow'>" + playerOrder[turn] + "</span> <span style='color:green'>submitted word " + submittedWords[submittedWords.length - 1] + "</span><br /><br />"+ $("#log").html());
+
+              if (lastLetter === "") {
+                $("#log").html(
+                  `<div style='text-align:center;'>
+                    Now, each player will use the <span style='color:orange'>last</span> letter of the previous player's word as the <span style='color:orange'>first</span> letter in the next. You will not need to use another card for the required letter.<br/>
+                  <br /></div>`
+                  + $("#log").html()
+                );
+              };
+
+              lastLetter = submittedWords[submittedWords.length - 1].slice(-1);
+              $("#lastLetter").html(lastLetter);
+              $("#lastLetter").css("display", "flex");
+
+              if (turn === playerOrder.length - 1) {
+                turn = 0;
+              } else {
+                turn++;
+              };
+              incrementTurn(turn);
+              printedTurnOrder = false;
+            }
+            else if (doc.data().players.length !== playerOrder.length) {
+              $("#log").html("<span style='color:red'>" + playerOrder[turn] + " gave up.</span><br /><br />"+ $("#log").html());
+              playerOrder = playerOrder.splice(turn, 1);
+              if (playerOrder.length === 1) {
+                $("#log").html(
+                  `<div style='text-align:center;'>
+                    <span style='color:red'>Game over!</span><br/>
+                    All other players have given up.
+                    Cards left in deck: `
+                    + String(deck.length) +
+                    `<br />
+                    Words spelled: `
+                    + String(wordsSpelled) +
+                    `<br />
+                    Refresh the page to try again.<br />
+                  </div><br />`
+                  + $("#log").html()
+                );
+              }
+            };
+          };
+        };
+      });
+
+      $("#log").html(
+        `<div style='text-align:center;'>` +
+          "Game ID: <span style='color:orange'>" + generatedGameID + "</span><br />" +
+          `Click [Ready] to start the game.
+        </div><br />` +
+        $("#log").html()
+      );
+    });
+  }
+
+  async function sendWordToFirestore(word) {
+    await updateDoc(doc(db, "games", generatedGameID), {
+      words: arrayUnion(word),
+    });
   };
 
-  // Load dictionary from dict.txt
-  $.get( "https://lowestofthe1ow.github.io/scrib/dict.txt", function( txt ) {
-    $("#log").html("Loaded successfully!<br />" + $("#log").html());
-
-    // Split dict.txt into an array
-    wordlist = txt.split( "\n" );
-    console.log(wordlist);
-
-    // Set card distribution in deck
-    const distribution = [
-      ["A", 9],
-      ["B", 2],
-      ["C", 2],
-      ["D", 4],
-      ["E", 12],
-      ["F", 2],
-      ["G", 3],
-      ["H", 2],
-      ["I", 9],
-      ["J", 1],
-      ["K", 1],
-      ["L", 4],
-      ["M", 2],
-      ["N", 6],
-      ["O", 8],
-      ["P", 2],
-      ["Q", 1],
-      ["R", 6],
-      ["S", 4],
-      ["T", 6],
-      ["U", 4],
-      ["V", 2],
-      ["W", 2],
-      ["X", 1],
-      ["Y", 2],
-      ["Z", 1]
-    ];
-    // Calculate total deck length
-    for (let i = 0; i < distribution.length; i++) {
-      deck.length += distribution[i][1];
-    };
-    // Generate and shuffle deck
-    var deckPosition = 0;
-    for (let i = 0; i < distribution.length; i++) {
-      deck = deck.fill(distribution[i][0], deckPosition, deckPosition + distribution[i][1]);
-      deckPosition += distribution[i][1];
-    };
-    shuffle();
-    // Update number of cards left in deck
-    $("#deckCount").html(String(deck.length));
-    // Add event listener to submit input when the "submit" button is clicked
-    $("#submit").click(
-      function(){
-        submitWord();
+  $("#host").click(
+    function() {
+      inputtedName = $("#name").val().replace(/\s+/g, "");
+      generatedGameID = "id" + Math.random().toString(16).slice(2);
+      if (inputtedName === "") {
+        alert("Please enter your name.")
       }
-    );
-    // Add event listener to return cards in hand to the deck and shuffle them when the "shuffle" button is clicked
-    $("#shuffle").click(
-      function(){
-        deck = deck.concat($("#display").html().replace(/\s+/g, '').split(""));
-        shuffle();
+      else {
+        $("#startOptions").css("display", "none");
+        $("#readyButton").css("display", "inline");
+        $("#game").css("display", "block");
+        initializeGame("host", generatedGameID);
       }
-    );
-    // Add event listener to end game when the "give up" button is clicked
-    $("#giveup").click(
-      function(){
-        $(".gameButton").prop("disabled", true);
-        $("#textBox").prop("disabled", true);
-        $("#log").html(
-          `<div style='text-align:center;'>
-            <span style='color:red'>Game over!</span><br/>
-            Cards left in deck: `
-            + String(deck.length) +
-            `<br />
-            Words spelled: `
-            + String(wordsSpelled) +
-            `<br />
-            Refresh the page to try again.<br />
-          </div><br />`
-          + $("#log").html()
-        );
-      }
-    );
+    }
+  );
 
-    // Enable all buttons
-    $(".gameButton").prop("disabled", false);
-    $("#log").html(
-      `<div style='text-align:center;'>
-        The large letters shown on screen are the <span style='color: orange'>cards</span> in your <span style='color: orange'>hand</span>.<br />
-        Type in a word that uses only these letters; you may not use a card more than once.<br/>
-        Click <span style='color: green'>Submit</span> or press Enter to submit your input.<br/>
-        Click <span style='color: orange'>Shuffle</span> to shuffle your cards.<br/>
-        Click <span style='color: red'>Give up</span> to end the game.<br/>
-      </div><br />`
-      + $("#log").html()
-    );
-  });
+  $("#join").click(
+    function() {
+      inputtedName = $("#name").val().replace(/\s+/g, "");
+      generatedGameID = $("#formGameID").val().replace(/\s+/g, "");
+      if (inputtedName === "") {
+        alert("Please enter your name.")
+      }
+      else if (generatedGameID === "") {
+        alert("Please input a game ID.")
+      }
+      else {
+        $("#startOptions").css("display", "none");
+        $("#game").css("display", "block");
+        initializeGame("join", generatedGameID);
+      }
+    }
+  );
 });

@@ -13,7 +13,7 @@ $(document).ready(function() {
   // Function for drawing cards
   function draw(number) {
     // Declare empty array of cards drawn
-    drawSet = [];
+    var drawSet = [];
     // Save length of deck array
     var deckLength = deck.length;
 
@@ -23,14 +23,14 @@ $(document).ready(function() {
     }
     // Draw all remaining cards if number of cards requested is more than the number of cards left in the deck array
     else if ((deckLength - number) >= 0) {
-      for(i = 0; i < number; i++) {
+      for(let i = 0; i < number; i++) {
         drawSet[i] = deck.shift();
       };
       $("#log").html("Drew " + String(drawSet.length) + " cards from your deck: " + drawSet.join(", ") + ".<br />" +  $("#log").html());
     }
     // Draw number of cards requested otherwise
     else {
-      for(i = 0; i < deckLength; i++) {
+      for(let i = 0; i < deckLength; i++) {
         drawSet[i] = deck.shift();
       };
       $("#log").html("Drew " + String(drawSet.length) + " cards from your deck: " + drawSet.join(", ") + ".<br />" +  $("#log").html());
