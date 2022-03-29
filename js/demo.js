@@ -153,7 +153,7 @@ $(document).ready(function() {
 
   async function setTurnOrder() {
     await updateDoc(doc(db, "games", generatedGameID), {
-      turnOrder: arrayUnion(hand[0] + inputtedName),
+      turnOrder: arrayUnion(hand.join("") + inputtedName),
     });
   };
 
@@ -338,12 +338,13 @@ $(document).ready(function() {
             };
 
             if(doc.data().turnOrder.length === doc.data().inputtedNames.length && decidedTurnOrder === false) {
-              playerOrder = doc.data().turnOrder.sort().map(s => s.slice(1))
-              let drawnLetters = doc.data().turnOrder.sort().map(s => s.charAt(0))
+              playerOrder = doc.data().turnOrder.sort().map(s => s.slice(7))
+              let drawnLetters = doc.data().turnOrder.sort().map(s => s.slice(0, 7))
+              console.log(drawnLetters);
 
               $("#log").html("<br />" + $("#log").html());
               for (let i = 0; i < playerOrder.length; i++) {
-                $("#log").html("<span style='color: yellow'>" + playerOrder[i] + "</span> drew " + drawnLetters[i] + " first.<br />" + $("#log").html());
+                $("#log").html("<span style='color: yellow'>" + playerOrder[i] + "</span> drew " + drawnLetters[i].split("").join(", ") + ".<br />" + $("#log").html());
               }
 
               $("#log").html("Thus, the turn order will be the following:<br /><span style='color:yellow'>" + playerOrder.join("</span>, <span style='color:yellow'>") + "</span><br /><br />" + $("#log").html());
