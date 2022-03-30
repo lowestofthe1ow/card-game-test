@@ -435,7 +435,8 @@ $(document).ready(function() {
               }
               else {
                 if (playerOrder.length > 1) {
-                  $("#log").html("<span style='color:green'>You haven no more cards in your hand or deck.</span><br /><br />"+ $("#log").html());
+                  broadcastPass();
+                  $("#log").html("<span style='color:green'>You have no more cards in your hand or deck.</span><br /><br />"+ $("#log").html());
                 } else {
                   broadcastGiveUp();
                   $(".gameButton").prop("disabled", true);
