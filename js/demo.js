@@ -50,6 +50,8 @@ $(document).ready(function() {
   var timesShuffled = 0;
   // Integers tracking of times a player has passed, used to update Firestore
   var timesPassed = 0;
+  // Integer value equal to total number of cards at the start of the game
+  var totalCards = 0;
 
   // ---------- Bools ----------
   // Whether room has started the game or not
@@ -214,8 +216,13 @@ $(document).ready(function() {
 
   // Function for updating Firestore after giving up
   async function broadcastGiveUp() {
+    var playerScore = {
+      name: inputtedName,
+      score: totalCards - deck.length - $("#display").html().replace(/\s+/g, '').split("").length
+    }
     await updateDoc(doc(db, "games", generatedGameID), {
-      inputtedNames: arrayRemove(inputtedName)
+      inputtedNames: arrayRemove(inputtedName),
+      scores: arrayUnion(playerScore)
     });
   };
 
@@ -288,6 +295,8 @@ $(document).ready(function() {
       for (let i = 0; i < distribution.length; i++) {
         deck.length += distribution[i][1];
       };
+      // Set totalCards to length of deck array
+      totalCards = deck.length;
       // Generate and shuffle deck
       var deckPosition = 0;
       for (let i = 0; i < distribution.length; i++) {
@@ -376,7 +385,8 @@ $(document).ready(function() {
           turnOrder: [],
           timesShuffled: 0,
           timesPassed: 0,
-          numberQuit: 0
+          numberQuit: 0,
+          scores: []
         });
       }
       // If the player is joining an existing room, update databases
@@ -393,7 +403,7 @@ $(document).ready(function() {
         });
       };
       // Listen for Firestore changes
-      const change = onSnapshot(doc(db, "games", generatedGameID), (firestoreDoc) => {
+      var change = onSnapshot(doc(db, "games", generatedGameID), (firestoreDoc) => {
         // If the room has not yet started the game, i.e., whenever a new player joins the room
         if (firestoreDoc.data().inProgress === false) {
           // Add new player to array of player names
@@ -580,12 +590,25 @@ $(document).ready(function() {
               if (playerOrder.length <= 0) {
                 // Generate the full Scrib, i.e., the combination of all the submitted words
                 let scrib = [firestoreDoc.data().words[0]].concat(firestoreDoc.data().words.slice(1).map(s => s.slice(1)));
-                console.log(scrib);
-                // Log local player results to game
+                // Sort scores
+                let sortedScoresArray = firestoreDoc.data().scores.sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
+
+                // Create a string for printing leaderboard
+                let currentRank = 1;
+                let printResults = "";
+                for (let i = 0; i < sortedScoresArray.length; i++) {
+                  printResults += "[" + currentRank + "] <span style='color:yellow'>" + sortedScoresArray[i].name + "</span> (Score: " + sortedScoresArray[i].score + ")<br />";
+                  // Give the same rank to equal scores
+                  if (i < sortedScoresArray.length - 1 && sortedScoresArray[i].score !== sortedScoresArray[i + 1].score) {
+                    currentRank++;
+                  };
+                };
+
+                // Log game results
                 $("#log").html(
                   `<div style='text-align:center;'>
                     <span style='color:red'>Game over!</span><br/>
-                    All players have given up.<br />
+                    All players have given up.<br /><br />
                     <span style='color:yellow'>Your stats:</span><br />
                     Cards left in deck: `
                     + String(deck.length) +
@@ -595,12 +618,18 @@ $(document).ready(function() {
                     `<br />
                     Your full Scrib: `
                     + scrib.join("") +
-                    `<br />Refresh the page to host or join a new room.<br />
-                  </div><br />`
+                    `<br /><br />
+                    <span style='color:yellow'>Leaderboard:</span><br />` +
+                    printResults +
+                  `</div><br />`
                   + $("#log").html()
                 );
+
+                // Stop listening for changes
+                change();
                 // Delete Firestore document
                 deleteFirestore();
+
                 // Disable all buttons
                 $(".gameButton").prop("disabled", true);
               }
