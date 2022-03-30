@@ -31,6 +31,7 @@ $(document).ready(function() {
   // Integer tracking number of words spelled
   var wordsSpelled = 0;
 
+  var otherPlayersOnJoin = [];
   var playerOrder = [];
 
   var inProgress = false;
@@ -309,7 +310,18 @@ $(document).ready(function() {
         }
       );
 
+      $("#log").html(
+        "<div style='text-align:center;'>" +
+          "Game ID: <span style='color:orange'>" + generatedGameID + "</span></div><br />" +
+        $("#log").html()
+      );
+
       if (type === "host") {
+        $("#log").html(
+          "<div style='text-align:center;'>" +
+            "Welcome, " + inputtedName + ".<br />Wait until there are at least 2 players in the room before starting the game.</div><br />" +
+          $("#log").html()
+        );
         await setDoc(doc(db, "games", generatedGameID), {
           inputtedNames: [inputtedName],
           words: [],
@@ -322,6 +334,13 @@ $(document).ready(function() {
         });
       }
       else if (type === "join") {
+        $("#log").html(
+          "<div style='text-align:center;'>" +
+            "Welcome, " + inputtedName + ".<br />Wait for the host to start the game.<br />Other people in the room:<br /><span style='color:yellow'>" +
+            otherPlayersOnJoin.join("</span>, <span style='color:yellow'>") +
+            "</span></div><br />" +
+          $("#log").html()
+        );
         await updateDoc(doc(db, "games", generatedGameID), {
           inputtedNames: arrayUnion(inputtedName),
         });
@@ -529,12 +548,6 @@ $(document).ready(function() {
           };
         };
       });
-
-      $("#log").html(
-        "<div style='text-align:center;'>" +
-          "Game ID: <span style='color:orange'>" + generatedGameID + "</span></div><br />" +
-        $("#log").html()
-      );
     });
   }
 
@@ -562,7 +575,7 @@ $(document).ready(function() {
         $("#startOptions").css("display", "none");
         $("#readyButton").css("display", "inline");
         $("#game").css("display", "block");
-        initializeGame("host", generatedGameID);
+        initializeGame("host");
       }
     }
   );
@@ -589,7 +602,8 @@ $(document).ready(function() {
           else {
             $("#startOptions").css("display", "none");
             $("#game").css("display", "block");
-            initializeGame("join", generatedGameID);
+            otherPlayersOnJoin = firestoreData.data().inputtedNames;
+            initializeGame("join");
           }
         }
         else {
