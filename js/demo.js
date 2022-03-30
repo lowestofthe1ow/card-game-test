@@ -272,7 +272,7 @@ $(document).ready(function() {
       // Add event listener to pass turn when the "pass" button is clicked
       $("#pass").click(
         function(){
-          $("#log").html("<span style='color:orange'>You passed your turn.</span>" + $("#log").html());
+          $("#log").html("<span style='color:orange'>You passed your turn.</span><br /><br />" + $("#log").html());
           broadcastPass();
           $("#pass").prop("disabled", "true");
           passReady = false;
@@ -285,7 +285,7 @@ $(document).ready(function() {
           broadcastGiveUp();
           $(".gameButton").prop("disabled", true);
           $("#textBox").prop("disabled", true);
-          if (playerOrder.length !== 1) {
+          if (playerOrder.length > 1) {
             $("#log").html(
               `<div style='text-align:center;'>
                 <span style='color:red'>You gave up!</span><br/>
@@ -394,25 +394,34 @@ $(document).ready(function() {
           } else if (decidedTurnOrder = true) {
             if (printedTurnOrder === false) {
               if (playerOrder.indexOf(inputtedName) !== turn) {
-                if (playerOrder.length !== 1) {
+                if (playerOrder.length > 1) {
                   $("#log").html("It is <span style='color:yellow'>" + playerOrder[turn] + "</span>'s turn.<br /><br />"+ $("#log").html());
                 };
                 $(".gameButton").prop("disabled", true);
                 printedTurnOrder = true;
               }
-              else {
-                if (playerOrder.length !== 1) {
+              else if ($("#display").html().replace(/\s+/g, '').split("").length > 0 || deck.length > 0) {
+                if (playerOrder.length > 1) {
                   $("#log").html("<span style='color:green'>It is your turn.</span><br /><br />"+ $("#log").html());
                 };
                 $("#submit").prop("disabled", false);
                 $("#giveup").prop("disabled", false);
-                if (shuffleReady === true && playerOrder.length !== 1) {
+                if (shuffleReady === true && playerOrder.length > 1) {
                   $("#shuffle").prop("disabled", false);
                 };
-                if (passReady === true && playerOrder.length !== 1) {
+                if (passReady === true && playerOrder.length > 1) {
                   $("#pass").prop("disabled", false);
                 };
                 printedTurnOrder = true;
+              }
+              else {
+                if (playerOrder.length > 1) {
+                  $("#log").html("<span style='color:green'>You haven no more cards in your hand or deck.</span><br /><br />"+ $("#log").html());
+                } else {
+                  broadcastGiveUp();
+                  $(".gameButton").prop("disabled", true);
+                  $("#textBox").prop("disabled", true);
+                };
               }
             }
 
@@ -530,9 +539,16 @@ $(document).ready(function() {
   }
 
   async function sendWordToFirestore(word) {
-    await updateDoc(doc(db, "games", generatedGameID), {
-      words: arrayUnion(word),
-    });
+    let fireStoreData = await getDoc(doc(db, "games", generatedGameID));
+    if (fireStoreData.exists()) {
+      let arrayWords = fireStoreData.data().words;
+      arrayWords.push(word);
+      await updateDoc(doc(db, "games", generatedGameID), {
+        words: arrayWords,
+      });
+    } else {
+      $("#log").html("<span style='color:red'>Failed to get Firestore document.</span><br /><br />")
+    }
   };
 
   $("#host").click(
