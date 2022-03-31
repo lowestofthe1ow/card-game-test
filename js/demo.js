@@ -71,10 +71,21 @@ $(document).ready(function() {
   var bgm;
 
   // Function to load and play sound effect
-  function playSFX() {
+  function playClickSFX() {
     $.get( "aud/button.wav", function() {
       var sfx = new Howl({
         src: ["aud/button.wav"],
+        volume: 0.5
+      });
+      sfx.play();
+    });
+  };
+
+  // Function to load and play sound effect
+  function playOtherPlayerSFX() {
+    $.get( "aud/otherplayersubmit.wav", function() {
+      var sfx = new Howl({
+        src: ["aud/otherplayersubmit.wav"],
         volume: 0.5
       });
       sfx.play();
@@ -175,7 +186,7 @@ $(document).ready(function() {
       // After confirming that the input is valid, update displays
       if (valid == true) {
         // Play sound effect
-        playSFX();
+        playClickSFX();
         // Enable the pass button
         passReady = true;
         // Add 1 to words spelled
@@ -269,7 +280,7 @@ $(document).ready(function() {
   // Function for initializing the game
   async function initializeGame(type) {
     // Play sound effect
-    playSFX();
+    playClickSFX();
 
     // Automatically give up when closing the window
     $(window).bind('beforeunload', function(){
@@ -333,7 +344,7 @@ $(document).ready(function() {
       $("#shuffle").click(
         function(){
           // Play sound effect
-          playSFX();
+          playClickSFX();
           // Update deck variable
           deck = deck.concat($("#display").html().replace(/\s+/g, '').split(""));
           // Shuffle and disable shuffle button
@@ -346,7 +357,7 @@ $(document).ready(function() {
       $("#pass").click(
         function(){
           // Play sound effect
-          playSFX();
+          playClickSFX();
           // Log to game
           $("#log").html("<span style='color:orange'>You passed your turn.</span><br /><br />" + $("#log").html());
           // Pass and disable pass button
@@ -359,7 +370,7 @@ $(document).ready(function() {
       $("#giveup").click(
         function(){
           // Play sound effect
-          playSFX();
+          playClickSFX();
           // Give up and disable all buttons
           broadcastGiveUp();
           $(".gameButton").prop("disabled", true);
@@ -387,7 +398,7 @@ $(document).ready(function() {
       $("#readyButton").click(
         async function() {
           // Play sound effect
-          playSFX();
+          playClickSFX();
 
           // Hide the button
           $("#readyButton").css("display", "none");
@@ -579,6 +590,8 @@ $(document).ready(function() {
             if (firestoreDoc.data().timesShuffled !== timesShuffled) {
               // If said player is not the local player, log to game
               if (playerOrder.indexOf(inputtedName) !== turn) {
+                // Play sound effect
+                playOtherPlayerSFX();
                 $("#log").html("<span style='color:yellow'>" + playerOrder[turn] + "</span> shuffled their cards.<br /><br />"+ $("#log").html());
               };
               // Set local timesShuffled to be equal to the Firestore timesShuffled
@@ -588,6 +601,8 @@ $(document).ready(function() {
             else if (firestoreDoc.data().timesPassed !== timesPassed) {
               // If said player is not the local player, log to game
               if (playerOrder.indexOf(inputtedName) !== turn) {
+                // Play sound effect
+                playOtherPlayerSFX();
                 $("#log").html("<span style='color:yellow'>" + playerOrder[turn] + "</span> passed their turn.<br /><br />"+ $("#log").html());
               };
               // Set local timesPassed to be equal to the Firestore timesPassed
@@ -607,6 +622,8 @@ $(document).ready(function() {
               submittedWords = firestoreDoc.data().words;
               // If said player is not the local player, log to game
               if (playerOrder.indexOf(inputtedName) !== turn) {
+                // Play sound effect
+                playOtherPlayerSFX();
                 $("#log").html("<span style='color:yellow'>" + playerOrder[turn] + "</span> <span style='color:green'>submitted word " + submittedWords[submittedWords.length - 1] + "</span><br /><br />"+ $("#log").html());
               };
               // If the word is the first word submitted, show explanation on the word-chain mechanic
@@ -635,6 +652,8 @@ $(document).ready(function() {
             else if (firestoreDoc.data().inputtedNames.length !== playerOrder.length) {
               // If said player is not the local player, log to game
               if (playerOrder[turn] !== inputtedName) {
+                // Play sound effect
+                playOtherPlayerSFX();
                 $("#log").html("<span style='color:red'>" + playerOrder[turn] + " gave up.</span><br /><br />"+ $("#log").html());
               }
               // Remove the player who has given up from the local playerOrder array
