@@ -443,6 +443,14 @@ $(document).ready(function() {
         if (firestoreDoc.data().inProgress === false) {
           // Add new player to array of player names
           let inputtedNamesArray = firestoreDoc.data().inputtedNames;
+          // Play sound effect
+          $.get( "aud/join.wav", function() {
+            var joinsfx = new Howl({
+              src: ["aud/join.wav"],
+              volume: 0.5
+            });
+            joinsfx.play();
+          });
           // Log name to game
           let newinputtedName = inputtedNamesArray[inputtedNamesArray.length - 1];
           $("#log").html(
