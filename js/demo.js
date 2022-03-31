@@ -339,16 +339,23 @@ $(document).ready(function() {
           broadcastGiveUp();
           $(".gameButton").prop("disabled", true);
           $("#textBox").prop("disabled", true);
-          // If player is not the last player in-game, log a message to game
+
+          // Create a string for logging a "You gave up!" message to game
+          var giveUpMessage = "<div style='text-align:center;'><span style='color:red'>You gave up!</span>";
+          // If player is not the last player in-game, add a "Waiting for other players..." to the message
           if (playerOrder.length > 1) {
-            $("#log").html(
-              `<div style='text-align:center;'>
-                <span style='color:red'>You gave up!</span><br/>
-                Waiting for other players...
-              </div><br />`
-              + $("#log").html()
-            );
+            giveUpMessage += "<br/>Waiting for other players...";
+          }
+          // Otherwise, add a "Loading results..." instead
+          else {
+            giveUpMessage += "<br/>Loading results...";
           };
+          // Close the div
+          giveUpMessage += "</div><br />";
+          // Log to the game
+          $("#log").html(
+            giveUpMessage + $("#log").html()
+          );
         }
       );
       // Add event listener to start game when host clicks "Ready"
