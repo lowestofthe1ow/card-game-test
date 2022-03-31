@@ -174,6 +174,8 @@ $(document).ready(function() {
       };
       // After confirming that the input is valid, update displays
       if (valid == true) {
+        // Play sound effect
+        playSFX();
         // Enable the pass button
         passReady = true;
         // Add 1 to words spelled
@@ -324,8 +326,6 @@ $(document).ready(function() {
       // Add event listener to submit input when the "submit" button is clicked
       $("#submit").click(
         function(){
-          // Play sound effect
-          playSFX();
           submitWord();
         }
       );
