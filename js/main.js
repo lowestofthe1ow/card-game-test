@@ -37,7 +37,7 @@ $(document).ready(function() {
     $.get( "aud/wrong.wav", function() {
       var sfx = new Howl({
         src: ["aud/wrong.wav"],
-        volume: 0.5
+        volume: 0.3
       });
       sfx.play();
     });
