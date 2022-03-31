@@ -1,4 +1,15 @@
 $(document).ready(function() {
+  // Load and play background music
+  var bgm;
+  $.get( "aud/bgm.mp3", function() {
+    bgm = new Howl({
+      src: ["aud/bgm.mp3"],
+      volume: 0.2,
+      loop: true
+    });
+    bgm.play();
+  });
+
   // Empty deck
   var deck = [];
   // Dictionary array
@@ -9,6 +20,17 @@ $(document).ready(function() {
   var wordsSpelled = 0;
   // String of words
   var scrib = "";
+
+  // Function to load and play sound effect
+  function playSFX() {
+    $.get( "aud/button.wav", function() {
+      var sfx = new Howl({
+        src: ["aud/button.wav"],
+        volume: 0.5
+      });
+      sfx.play();
+    });
+  };
 
   // Function for drawing cards
   function draw(number) {
@@ -204,12 +226,16 @@ $(document).ready(function() {
     // Add event listener to submit input when the "submit" button is clicked
     $("#submit").click(
       function(){
+        // Play sound effect
+        playSFX();
         submitWord();
       }
     );
     // Add event listener to return cards in hand to the deck and shuffle them when the "shuffle" button is clicked
     $("#shuffle").click(
       function(){
+        // Play sound effect
+        playSFX();
         deck = deck.concat($("#display").html().replace(/\s+/g, '').split(""));
         shuffle();
       }
@@ -217,8 +243,12 @@ $(document).ready(function() {
     // Add event listener to end game when the "give up" button is clicked
     $("#giveup").click(
       function(){
+        // Play sound effect
+        playSFX();
         $(".gameButton").prop("disabled", true);
         $("#textBox").prop("disabled", true);
+        // Stop background music
+        bgm.stop();
         $("#log").html(
           `<div style='text-align:center;'>
             <span style='color:red'>Game over!</span><br/>

@@ -67,6 +67,20 @@ $(document).ready(function() {
   // The player is allowed to pass; they cannot pass twice in a row
   var passReady = true;
 
+  // Background music audio object
+  var bgm;
+
+  // Function to load and play sound effect
+  function playSFX() {
+    $.get( "aud/button.wav", function() {
+      var sfx = new Howl({
+        src: ["aud/button.wav"],
+        volume: 0.5
+      });
+      sfx.play();
+    });
+  };
+
   // Function for drawing cards
   function draw(number) {
     // Declare empty array of cards drawn
@@ -252,6 +266,9 @@ $(document).ready(function() {
 
   // Function for initializing the game
   async function initializeGame(type) {
+    // Play sound effect
+    playSFX();
+
     // Automatically give up when closing the window
     $(window).bind('beforeunload', function(){
       broadcastGiveUp();
@@ -307,12 +324,16 @@ $(document).ready(function() {
       // Add event listener to submit input when the "submit" button is clicked
       $("#submit").click(
         function(){
+          // Play sound effect
+          playSFX();
           submitWord();
         }
       );
       // Add event listener to return cards in hand to the deck and shuffle them when the "shuffle" button is clicked
       $("#shuffle").click(
         function(){
+          // Play sound effect
+          playSFX();
           // Update deck variable
           deck = deck.concat($("#display").html().replace(/\s+/g, '').split(""));
           // Shuffle and disable shuffle button
@@ -324,6 +345,8 @@ $(document).ready(function() {
       // Add event listener to pass turn when the "pass" button is clicked
       $("#pass").click(
         function(){
+          // Play sound effect
+          playSFX();
           // Log to game
           $("#log").html("<span style='color:orange'>You passed your turn.</span><br /><br />" + $("#log").html());
           // Pass and disable pass button
@@ -335,6 +358,8 @@ $(document).ready(function() {
       // Add event listener to end game when the "give up" button is clicked
       $("#giveup").click(
         function(){
+          // Play sound effect
+          playSFX();
           // Give up and disable all buttons
           broadcastGiveUp();
           $(".gameButton").prop("disabled", true);
@@ -361,6 +386,9 @@ $(document).ready(function() {
       // Add event listener to start game when host clicks "Ready"
       $("#readyButton").click(
         async function() {
+          // Play sound effect
+          playSFX();
+
           // Hide the button
           $("#readyButton").css("display", "none");
           inProgress = true;
@@ -440,6 +468,15 @@ $(document).ready(function() {
           if (startedGame === false) {
             // ...and the player has not yet uploaded their starting hand to Firestore
             if (drawnStartingHand === false) {
+              // Load and play background music
+              $.get( "aud/bgm.mp3", function() {
+                bgm = new Howl({
+                  src: ["aud/bgm.mp3"],
+                  volume: 0.2,
+                  loop: true
+                });
+                bgm.play();
+              });
               $("#log").html(
                 `<div style='text-align:center;'>
                 The game has started!
@@ -472,7 +509,8 @@ $(document).ready(function() {
                   The large letters shown on screen are the <span style='color: orange'>cards</span> in your <span style='color: orange'>hand</span>.<br />
                   Type in a word that uses only these letters; you may not use a card more than once.<br/>
                   Click <span style='color: green'>Submit</span> or press Enter to submit your input.<br/>
-                  Click <span style='color: orange'>Shuffle</span> to shuffle your cards.<br/>
+                  Click <span style='color: orange'>Shuffle</span> to shuffle your cards. You may do this once per turn.<br/>
+                  Click <span style='color: orange'>Pass</span> to pass your turn. You may not pass two turns in a row.<br/>
                   Click <span style='color: red'>Give up</span> to end the game.<br/>
                 </div><br />`
                 + $("#log").html()
@@ -610,6 +648,9 @@ $(document).ready(function() {
                     currentRank++;
                   };
                 };
+
+                // Stop background music
+                bgm.stop();
 
                 // Log game results
                 $("#log").html(
