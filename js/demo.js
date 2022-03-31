@@ -92,6 +92,28 @@ $(document).ready(function() {
     });
   };
 
+  // Function to load and play sound effect
+  function playErrorSFX() {
+    $.get( "aud/wrong.wav", function() {
+      var sfx = new Howl({
+        src: ["aud/wrong.wav"],
+        volume: 0.5
+      });
+      sfx.play();
+    });
+  };
+
+  // Function to load and play sound effect
+  function playGameOverSFX() {
+    $.get( "aud/gameover.wav", function() {
+      var sfx = new Howl({
+        src: ["aud/gameover.wav"],
+        volume: 0.5
+      });
+      sfx.play();
+    });
+  };
+
   // Function for drawing cards
   function draw(number) {
     // Declare empty array of cards drawn
@@ -153,6 +175,8 @@ $(document).ready(function() {
 
     // Invalidate input if it is longer than 7 characters
     if (arr.length > 7) {
+      // Play sound effect
+      playErrorSFX();
       // Log to game
       $("#log").html("<span style='color: red'>Tried to submit " + text + ", but you used more than 7 characters.</span><br /><br />" + $("#log").html());
     }
@@ -162,6 +186,8 @@ $(document).ready(function() {
     }
     // Invalidate input if it is not a valid word in the loaded dictionary
     else if ($.inArray(text, wordlist) === -1) {
+      // Play sound effect
+      playErrorSFX();
       // Log to game
       $("#log").html("<span style='color: red'>Tried to submit " + text + ", but it is not a valid word.</span><br /><br />" + $("#log").html());
       return 0;
@@ -174,6 +200,8 @@ $(document).ready(function() {
         index = tempHand.findIndex(function(x) {return x == arr[i]});
         // Invalidate input if ith character does not exist in cloned array
         if (index == -1) {
+          // Play sound effect
+          playErrorSFX();
           $("#log").html("<span style='color: red'>Tried to submit " + text + ", but there are not enough " + arr[i] + " cards in your hand.</span><br /><br />" + $("#log").html());
           valid = false;
           break;
@@ -369,8 +397,6 @@ $(document).ready(function() {
       // Add event listener to end game when the "give up" button is clicked
       $("#giveup").click(
         function(){
-          // Play sound effect
-          playClickSFX();
           // Give up and disable all buttons
           broadcastGiveUp();
           $(".gameButton").prop("disabled", true);
@@ -380,6 +406,8 @@ $(document).ready(function() {
           var giveUpMessage = "<div style='text-align:center;'><span style='color:red'>You gave up!</span>";
           // If player is not the last player in-game, add a "Waiting for other players..." to the message
           if (playerOrder.length > 1) {
+            // Play sound effect
+            playGameOverSFX();
             giveUpMessage += "<br/>Waiting for other players...";
           }
           // Otherwise, add a "Loading results..." instead
@@ -678,6 +706,9 @@ $(document).ready(function() {
 
                 // Stop background music
                 bgm.stop();
+
+                // Play sound effect
+                playGameOverSFX();
 
                 // Log game results
                 $("#log").html(

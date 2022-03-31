@@ -32,6 +32,17 @@ $(document).ready(function() {
     });
   };
 
+  // Function to load and play sound effect
+  function playErrorSFX() {
+    $.get( "aud/wrong.wav", function() {
+      var sfx = new Howl({
+        src: ["aud/wrong.wav"],
+        volume: 0.5
+      });
+      sfx.play();
+    });
+  };
+
   // Function for drawing cards
   function draw(number) {
     // Declare empty array of cards drawn
@@ -94,6 +105,8 @@ $(document).ready(function() {
 
     // Invalidate input if it is longer than 7 characters
     if (arr.length > 7) {
+      // Play sound effect
+      playErrorSFX();
       $("#log").html("<span style='color: red'>Tried to submit " + text + ", but you used more than 7 characters.</span><br /><br />" + $("#log").html());
     }
     // Ignore input if it is empty
@@ -102,6 +115,8 @@ $(document).ready(function() {
     }
     // Invalidate input if it is not a valid word in the loaded dictionary
     else if ($.inArray(text, wordlist) === -1) {
+      // Play sound effect
+      playErrorSFX();
       $("#log").html("<span style='color: red'>Tried to submit " + text + ", but it is not a valid word.</span><br /><br />" + $("#log").html());
       return 0;
     }
@@ -113,6 +128,8 @@ $(document).ready(function() {
         index = tempHand.findIndex(function(x) {return x == arr[i]});
         // Invalidate input if it does not exist
         if (index == -1) {
+          // Play sound effect
+          playErrorSFX();
           $("#log").html("<span style='color: red'>Tried to submit " + text + ", but there are not enough " + arr[i] + " cards in your hand.</span><br /><br />" + $("#log").html());
           valid = false;
           break;
@@ -244,7 +261,13 @@ $(document).ready(function() {
     $("#giveup").click(
       function(){
         // Play sound effect
-        playSFX();
+        $.get( "aud/gameover.wav", function() {
+          var sfx = new Howl({
+            src: ["aud/gameover.wav"],
+            volume: 0.5
+          });
+          sfx.play();
+        });
         $(".gameButton").prop("disabled", true);
         $("#textBox").prop("disabled", true);
         // Stop background music
