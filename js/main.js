@@ -1,15 +1,4 @@
 $(document).ready(function() {
-  // Load and play background music
-  var bgm;
-  $.get( "aud/bgm.mp3", function() {
-    bgm = new Howl({
-      src: ["aud/bgm.mp3"],
-      volume: 0.2,
-      loop: true
-    });
-    bgm.play();
-  });
-
   // Empty deck
   var deck = [];
   // Dictionary array
@@ -21,27 +10,43 @@ $(document).ready(function() {
   // String of words
   var scrib = "";
 
-  // Function to load and play sound effect
-  function playSFX() {
-    $.get( "aud/button.wav", function() {
-      var sfx = new Howl({
-        src: ["aud/button.wav"],
-        volume: 0.5
-      });
-      sfx.play();
+  // Preload background music
+  var bgm;
+  $.get( "aud/bgm.mp3", function() {
+    bgm = new Howl({
+      src: ["aud/bgm.mp3"],
+      volume: 0.2,
+      loop: true
     });
-  };
+    bgm.play();
+  });
 
-  // Function to load and play sound effect
-  function playErrorSFX() {
-    $.get( "aud/wrong.wav", function() {
-      var sfx = new Howl({
-        src: ["aud/wrong.wav"],
-        volume: 0.3
-      });
-      sfx.play();
+  // Preload click sound effect
+  var clickSFX;
+  $.get( "aud/button.wav", function() {
+    clickSFX = new Howl({
+      src: ["aud/button.wav"],
+      volume: 0.5
     });
-  };
+  });
+
+  // Preload error sound effect
+  var errorSFX;
+  $.get( "aud/wrong.wav", function() {
+    errorSFX = new Howl({
+      src: ["aud/wrong.wav"],
+      volume: 0.3
+    });
+  });
+
+  // Preload game over sound effect
+  var gameOverSFX;
+  $.get( "aud/gameover.wav", function() {
+    gameOverSFX = new Howl({
+      src: ["aud/gameover.wav"],
+      volume: 0.5
+    });
+  });
 
   // Function for drawing cards
   function draw(number) {
@@ -106,7 +111,7 @@ $(document).ready(function() {
     // Invalidate input if it is longer than 7 characters
     if (arr.length > 7) {
       // Play sound effect
-      playErrorSFX();
+      errorSFX.play();
       $("#log").html("<span style='color: red'>Tried to submit " + text + ", but you used more than 7 characters.</span><br /><br />" + $("#log").html());
     }
     // Ignore input if it is empty
@@ -116,7 +121,7 @@ $(document).ready(function() {
     // Invalidate input if it is not a valid word in the loaded dictionary
     else if ($.inArray(text, wordlist) === -1) {
       // Play sound effect
-      playErrorSFX();
+      errorSFX.play();
       $("#log").html("<span style='color: red'>Tried to submit " + text + ", but it is not a valid word.</span><br /><br />" + $("#log").html());
       return 0;
     }
@@ -129,7 +134,7 @@ $(document).ready(function() {
         // Invalidate input if it does not exist
         if (index == -1) {
           // Play sound effect
-          playErrorSFX();
+          errorSFX.play();
           $("#log").html("<span style='color: red'>Tried to submit " + text + ", but there are not enough " + arr[i] + " cards in your hand.</span><br /><br />" + $("#log").html());
           valid = false;
           break;
@@ -142,7 +147,7 @@ $(document).ready(function() {
       // After confirming that the input is valid, update displays
       if (valid == true) {
         // Play sound effect
-        playSFX();
+        clickSFX.play();
         // Set the next letter requirement
         $("#lastLetter").html(text.slice(-1));
         $("#lastLetter").css("display", "flex");
@@ -252,7 +257,7 @@ $(document).ready(function() {
     $("#shuffle").click(
       function(){
         // Play sound effect
-        playSFX();
+        clickSFX.play();
         deck = deck.concat($("#display").html().replace(/\s+/g, '').split(""));
         shuffle();
       }
@@ -261,13 +266,7 @@ $(document).ready(function() {
     $("#giveup").click(
       function(){
         // Play sound effect
-        $.get( "aud/gameover.wav", function() {
-          var sfx = new Howl({
-            src: ["aud/gameover.wav"],
-            volume: 0.5
-          });
-          sfx.play();
-        });
+        gameOverSFX.play();
         $(".gameButton").prop("disabled", true);
         $("#textBox").prop("disabled", true);
         // Stop background music

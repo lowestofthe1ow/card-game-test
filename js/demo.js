@@ -67,52 +67,60 @@ $(document).ready(function() {
   // The player is allowed to pass; they cannot pass twice in a row
   var passReady = true;
 
-  // Background music audio object
+  // Preload background music
   var bgm;
-
-  // Function to load and play sound effect
-  function playClickSFX() {
-    $.get( "aud/button.wav", function() {
-      var sfx = new Howl({
-        src: ["aud/button.wav"],
-        volume: 0.5
-      });
-      sfx.play();
+  $.get( "aud/bgm.mp3", function() {
+    bgm = new Howl({
+      src: ["aud/bgm.mp3"],
+      volume: 0.2,
+      loop: true
     });
-  };
+  });
 
-  // Function to load and play sound effect
-  function playOtherPlayerSFX() {
-    $.get( "aud/otherplayersubmit.wav", function() {
-      var sfx = new Howl({
-        src: ["aud/otherplayersubmit.wav"],
-        volume: 0.5
-      });
-      sfx.play();
+  // Preload click sound effect
+  var clickSFX;
+  $.get( "aud/button.wav", function() {
+    clickSFX = new Howl({
+      src: ["aud/button.wav"],
+      volume: 0.5
     });
-  };
+  });
 
-  // Function to load and play sound effect
-  function playErrorSFX() {
-    $.get( "aud/wrong.wav", function() {
-      var sfx = new Howl({
-        src: ["aud/wrong.wav"],
-        volume: 0.3
-      });
-      sfx.play();
+  // Preload other players' click sound effect
+  var otherPlayerSFX;
+  $.get( "aud/otherplayersubmit.wav", function() {
+    otherPlayerSFX = new Howl({
+      src: ["aud/otherplayersubmit.wav"],
+      volume: 0.5
     });
-  };
+  });
 
-  // Function to load and play sound effect
-  function playGameOverSFX() {
-    $.get( "aud/gameover.wav", function() {
-      var sfx = new Howl({
-        src: ["aud/gameover.wav"],
-        volume: 0.5
-      });
-      sfx.play();
+  // Preload error sound effect
+  var errorSFX;
+  $.get( "aud/wrong.wav", function() {
+    errorSFX = new Howl({
+      src: ["aud/wrong.wav"],
+      volume: 0.3
     });
-  };
+  });
+
+  // Preload game over sound effect
+  var gameOverSFX;
+  $.get( "aud/gameover.wav", function() {
+    gameOverSFX = new Howl({
+      src: ["aud/gameover.wav"],
+      volume: 0.5
+    });
+  });
+
+  // Preload player join sound effect
+  var joinSFX;
+  $.get( "aud/join.wav", function() {
+    joinSFX = new Howl({
+      src: ["aud/join.wav"],
+      volume: 0.5
+    });
+  });
 
   // Function for drawing cards
   function draw(number) {
@@ -176,7 +184,7 @@ $(document).ready(function() {
     // Invalidate input if it is longer than 7 characters
     if (arr.length > 7) {
       // Play sound effect
-      playErrorSFX();
+      errorSFX.play();
       // Log to game
       $("#log").html("<span style='color: red'>Tried to submit " + text + ", but you used more than 7 characters.</span><br /><br />" + $("#log").html());
     }
@@ -187,7 +195,7 @@ $(document).ready(function() {
     // Invalidate input if it is not a valid word in the loaded dictionary
     else if ($.inArray(text, wordlist) === -1) {
       // Play sound effect
-      playErrorSFX();
+      errorSFX.play();
       // Log to game
       $("#log").html("<span style='color: red'>Tried to submit " + text + ", but it is not a valid word.</span><br /><br />" + $("#log").html());
       return 0;
@@ -201,7 +209,7 @@ $(document).ready(function() {
         // Invalidate input if ith character does not exist in cloned array
         if (index == -1) {
           // Play sound effect
-          playErrorSFX();
+          errorSFX.play();
           $("#log").html("<span style='color: red'>Tried to submit " + text + ", but there are not enough " + arr[i] + " cards in your hand.</span><br /><br />" + $("#log").html());
           valid = false;
           break;
@@ -214,7 +222,7 @@ $(document).ready(function() {
       // After confirming that the input is valid, update displays
       if (valid == true) {
         // Play sound effect
-        playClickSFX();
+        clickSFX.play();
         // Enable the pass button
         passReady = true;
         // Add 1 to words spelled
@@ -308,7 +316,7 @@ $(document).ready(function() {
   // Function for initializing the game
   async function initializeGame(type) {
     // Play sound effect
-    playClickSFX();
+    clickSFX.play();
 
     // Automatically give up when closing the window
     $(window).bind('beforeunload', function(){
@@ -372,7 +380,7 @@ $(document).ready(function() {
       $("#shuffle").click(
         function(){
           // Play sound effect
-          playClickSFX();
+          clickSFX.play();
           // Update deck variable
           deck = deck.concat($("#display").html().replace(/\s+/g, '').split(""));
           // Shuffle and disable shuffle button
@@ -385,7 +393,7 @@ $(document).ready(function() {
       $("#pass").click(
         function(){
           // Play sound effect
-          playClickSFX();
+          clickSFX.play();
           // Log to game
           $("#log").html("<span style='color:orange'>You passed your turn.</span><br /><br />" + $("#log").html());
           // Pass and disable pass button
@@ -407,7 +415,7 @@ $(document).ready(function() {
           // If player is not the last player in-game, add a "Waiting for other players..." to the message
           if (playerOrder.length > 1) {
             // Play sound effect
-            playGameOverSFX();
+            gameOverSFX.play();
             giveUpMessage += "<br/>Waiting for other players...";
           }
           // Otherwise, add a "Loading results..." instead
@@ -426,7 +434,7 @@ $(document).ready(function() {
       $("#readyButton").click(
         async function() {
           // Play sound effect
-          playClickSFX();
+          clickSFX.play();
 
           // Hide the button
           $("#readyButton").css("display", "none");
@@ -483,13 +491,7 @@ $(document).ready(function() {
           // Add new player to array of player names
           let inputtedNamesArray = firestoreDoc.data().inputtedNames;
           // Play sound effect
-          $.get( "aud/join.wav", function() {
-            var joinsfx = new Howl({
-              src: ["aud/join.wav"],
-              volume: 0.5
-            });
-            joinsfx.play();
-          });
+          joinSFX.play();
           // Log name to game
           let newinputtedName = inputtedNamesArray[inputtedNamesArray.length - 1];
           $("#log").html(
@@ -515,15 +517,8 @@ $(document).ready(function() {
           if (startedGame === false) {
             // ...and the player has not yet uploaded their starting hand to Firestore
             if (drawnStartingHand === false) {
-              // Load and play background music
-              $.get( "aud/bgm.mp3", function() {
-                bgm = new Howl({
-                  src: ["aud/bgm.mp3"],
-                  volume: 0.2,
-                  loop: true
-                });
-                bgm.play();
-              });
+              // Play background music
+              bgm.play();
               $("#log").html(
                 `<div style='text-align:center;'>
                 The game has started!
@@ -619,7 +614,7 @@ $(document).ready(function() {
               // If said player is not the local player, log to game
               if (playerOrder.indexOf(inputtedName) !== turn) {
                 // Play sound effect
-                playOtherPlayerSFX();
+                otherPlayerSFX.play();
                 $("#log").html("<span style='color:yellow'>" + playerOrder[turn] + "</span> shuffled their cards.<br /><br />"+ $("#log").html());
               };
               // Set local timesShuffled to be equal to the Firestore timesShuffled
@@ -630,7 +625,7 @@ $(document).ready(function() {
               // If said player is not the local player, log to game
               if (playerOrder.indexOf(inputtedName) !== turn) {
                 // Play sound effect
-                playOtherPlayerSFX();
+                otherPlayerSFX.play();
                 $("#log").html("<span style='color:yellow'>" + playerOrder[turn] + "</span> passed their turn.<br /><br />"+ $("#log").html());
               };
               // Set local timesPassed to be equal to the Firestore timesPassed
@@ -651,7 +646,7 @@ $(document).ready(function() {
               // If said player is not the local player, log to game
               if (playerOrder.indexOf(inputtedName) !== turn) {
                 // Play sound effect
-                playOtherPlayerSFX();
+                otherPlayerSFX.play();
                 $("#log").html("<span style='color:yellow'>" + playerOrder[turn] + "</span> <span style='color:green'>submitted word " + submittedWords[submittedWords.length - 1] + "</span><br /><br />"+ $("#log").html());
               };
               // If the word is the first word submitted, show explanation on the word-chain mechanic
@@ -681,7 +676,7 @@ $(document).ready(function() {
               // If said player is not the local player, log to game
               if (playerOrder[turn] !== inputtedName) {
                 // Play sound effect
-                playOtherPlayerSFX();
+                otherPlayerSFX.play();
                 $("#log").html("<span style='color:red'>" + playerOrder[turn] + " gave up.</span><br /><br />"+ $("#log").html());
               }
               // Remove the player who has given up from the local playerOrder array
@@ -708,7 +703,7 @@ $(document).ready(function() {
                 bgm.stop();
 
                 // Play sound effect
-                playGameOverSFX();
+                gameOverSFX.play();
 
                 // Log game results
                 $("#log").html(
